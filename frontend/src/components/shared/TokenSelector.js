@@ -24,7 +24,7 @@ const Label = styled.span`
 
 const Divider = styled.div`
   border: ${({ theme: { colors } }) => `1px solid ${colors.border}`};
-  margin: 16px 0px;
+  margin: 6px 0px;
   width: 100%;
 `;
 
@@ -33,8 +33,9 @@ const TokensContainer = styled.div`
   flex-flow: column;
   overflow: auto;
 
-  & > div:not(:last-child) {
-    margin-bottom: 16px;
+  & > div {
+    padding: 7px;
+    border-radius: 7px
   }
 `;
 
@@ -43,12 +44,19 @@ const TokenItem = styled.div`
   display: flex;
   align-items: center;
   font-size: 16px;
+  gap: 7px;
   opacity: ${({ active }) => (active ? 0.3 : 1)};
   color: ${({ selected }) => (selected ? 'green' : '')};
   svg {
     margin-right: 8px;
     width: 24px;
     height: 24px;
+  }
+  :hover {
+    background-color: #ececec;
+  }
+  :active {
+    background-color: #cccccc;
   }
 `;
 
@@ -67,14 +75,13 @@ const TokenSelector = ({ show, selectedToken, onTokenClick, onClose, fromToken, 
               onClose()
             }} />
             <FormContainer
-              title="select a token"
+              title="Select a Token"
               containerStyle={{ height: '100%', maxHeight: '80vh', maxWidth: '90vw' }}
               onClose={() => {
                 setSearchValue('')
                 onClose()
               }}
             >
-              <Label style={{ marginBottom: 4 }}>search token</Label>
               <Search
                 fluid
                 containerStyle={{ marginBottom: 15 }}

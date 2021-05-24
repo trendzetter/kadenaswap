@@ -18,7 +18,7 @@ const BalanceContainer = styled.div`
   font-family: 'neue-bold';
   font-size: 14px;
   color: white;
-  border-radius: 4px;
+  border-radius: 7px;
 `;
 
 const AccountContainer = styled.div`
@@ -27,7 +27,7 @@ const AccountContainer = styled.div`
   font-family: 'neue-bold';
   font-size: 14px;
   color: ${({ theme: { colors } }) => colors.pink};
-  border-radius: 4px;
+  border-radius: 7px;
   margin-left: -10px;
   z-index: 2;
 `;

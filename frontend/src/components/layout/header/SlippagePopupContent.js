@@ -32,7 +32,7 @@ const SlippageTolleranceValue = styled.div`
   min-width: 48px;
   display: flex;
   justify-content: center;
-  background-image: ${({ isSelected }) => (isSelected ? 'linear-gradient(to top right, #ed098f 0%,  #7a0196 100%)' : '#ffffff')};
+  background-image: ${({ isSelected }) => (isSelected ? 'linear-gradient(to top right, #c56cf0 0%,  #c56cf0 100%)' : '#ffffff')};
   cursor: pointer;
 `;
 

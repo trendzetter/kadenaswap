@@ -22,7 +22,7 @@ const Container = styled.div`
 const RowContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  margin: 15px 0px;
+  margin: 0px 0px;
 `;
 
 const Label = styled.span`
@@ -42,6 +42,7 @@ const SwapContainer = () => {
   const [showTxModal, setShowTxModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [fetchingPair, setFetchingPair] = useState(false)
+
   const [priceImpact, setPriceImpact] = useState("")
   const pact = useContext(PactContext);
 
@@ -192,12 +193,12 @@ const SwapContainer = () => {
         onTokenClick={onTokenClick}
         onClose={() => setShowTxModal(false)}
       />
-      <FormContainer title="swap">
+      <FormContainer title="Swap">
         <Input
           error={isNaN(fromValues.amount)}
           leftLabel={`from ${fromNote}`}
           rightLabel={`balance: ${reduceBalance(fromValues.balance) ?? '-'}`}
-          placeholder="enter amount"
+          placeholder="0.00"
           inputRightComponent={
             fromValues.coin ? (
               <InputToken
@@ -221,7 +222,7 @@ const SwapContainer = () => {
           error={isNaN(toValues.amount)}
           leftLabel={`to ${toNote}`}
           rightLabel={`balance: ${reduceBalance(toValues.balance) ?? '-'}`}
-          placeholder="enter amount"
+          placeholder="0.00"
           inputRightComponent={
             toValues.coin ? (
               <InputToken
@@ -249,7 +250,7 @@ const SwapContainer = () => {
               </RowContainer>
               <RowContainer style={{ marginTop: 5 }}>
                 <Label>Price Impact</Label>
-                <span style={{color: pact.priceImpactWithoutFee(priceImpact) > 0.1 ? "red" : "green" }}>{
+                <span style={{color: pact.priceImpactWithoutFee(priceImpact) > 0.05 ? "red" : "green" }}>{
                   pact.priceImpactWithoutFee(priceImpact)<0.0001 && pact.priceImpactWithoutFee(priceImpact)
                     ? "< 0.01%"
                     : `${reduceBalance(pact.priceImpactWithoutFee(priceImpact)*100, 4)}%`
@@ -269,7 +270,7 @@ const SwapContainer = () => {
             <></>
         )}
         <Button
-          buttonStyle={{ marginTop: 24, marginRight: 0 }}
+          buttonStyle={{ marginTop: 15, marginRight: 0 }}
           disabled={getButtonLabel() !== "SWAP" || isNaN(fromValues.amount) || isNaN(toValues.amount)}
           loading={loading}
           onClick={async () => {

@@ -89,7 +89,7 @@ const LiquidityList = (props) => {
       <FormContainer title="Your Liquidity">
         <RightContainer>
           <Button
-             disabled
+		     disabled
              buttonStyle={{ marginLeft: 24 }}
              onClick={() => props.selectCreatePair()}>
              Create a pair
@@ -101,8 +101,7 @@ const LiquidityList = (props) => {
         </RightContainer>
         <Divider/>
         {pact.account.account!==null
-          ? pact.pairListAccount[0]
-            ? Object.values(pact.pairListAccount).map(pair => {
+          ? Object.values(pact.pairListAccount).map(pair => {
               return (
                 pair
                 ?
@@ -116,10 +115,6 @@ const LiquidityList = (props) => {
                 : ""
               )
             })
-            :
-              <Dimmer active inverted>
-                <Loader>Loading</Loader>
-              </Dimmer>
           : <Message>Connect an account to view your liquidity</Message>
         }
       </FormContainer>

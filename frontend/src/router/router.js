@@ -9,7 +9,6 @@ import StaticContainer from '../containers/StaticContainer';
 import KpennyContainer from '../containers/KpennyContainer';
 import KpennyRedeemContainer from '../containers/KpennyRedeemContainer';
 import RedeemGuide from '../modals/RedeemGuide'
-
 import {
   ROUTE_INDEX,
   ROUTE_POOL,

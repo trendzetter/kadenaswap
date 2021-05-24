@@ -1,0 +1,13 @@
+.ui.input>input, .ui.purple.message, .ui.menu{
+    border-radius: 3rem;
+}
+
+
+.ui.input>input:hover {
+    border-color: #b8b8b8;
+}
+
+.ui.input>input:focus {
+    border-color: #c56cf0;
+    background: #fff;
+}

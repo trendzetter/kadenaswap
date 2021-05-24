@@ -4,6 +4,7 @@ import styled from 'styled-components/macro';
 import { Input as SUIInput } from 'semantic-ui-react';
 import { ReactComponent as ArrowDown } from '../../assets/images/shared/arrow-down.svg';
 import { theme } from '../../styles/theme';
+import '../../styles/inputoverride.css';
 
 const Container = styled.div`
   display: flex;
@@ -39,17 +40,25 @@ const Button = styled.button`
   align-items: center;
   background-color: red;
   position: absolute;
-  top: 25%;
+  top: 19%;
   right: 10px;
   max-height: 22px;
-  padding: 8px !important;
-  background: ${({ theme: { buttonBackgroundGradient } }) => buttonBackgroundGradient};
+  padding: 15px !important;
+  border-radius: 2rem;
+  cursor: pointer;
+  background: #c56cf0;
+  :hover {
+    background-color: #9b59b6;
+  }
+  :active {
+    background-color: #8e44ad;
+  }
   span {
     font-family: neue-bold;
     font-size: 14px;
     color: white;
     text-transform: capitalize;
-  }
+  },
 `;
 
 const Input = ({
@@ -113,8 +122,15 @@ const Input = ({
         onChange={(e, props) => {
           if (numberOnly && props.value.match(/[a-zA-Z]/)) return;
           onChange(e, props);
-        }}
-      />
+          }
+        }
+      >
+          {/* <input 
+          style={{borderRadius: '100px'}} 
+          icon={getIcon()}
+          />  */}
+
+      </SUIInput> 
     </Container>
   );
 };

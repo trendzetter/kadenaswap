@@ -3,9 +3,7 @@ import styled from 'styled-components/macro';
 import { Search as SUISearch } from 'semantic-ui-react';
 
 const Container = styled.div.attrs({ icon: 'search' })`
-  .ui.search .prompt {
-    border-radius: 4px;
-  }
+
   .ui.input {
     width: ${({ fluid }) => (fluid ? '100%' : 'auto')};
   }

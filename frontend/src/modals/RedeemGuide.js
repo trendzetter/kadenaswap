@@ -1,7 +1,5 @@
 import React from 'react'
 import { Button, Header, Image, Modal, Label, Divider } from 'semantic-ui-react'
-import { NavLink, useHistory } from 'react-router-dom';
-import { ROUTE_INDEX, ROUTE_POOL, ROUTE_SWAP, ROUTE_KPY_RED } from '../router/routes';
 
 function ModalExampleModal() {
   const [open, setOpen] = React.useState(true)
@@ -13,22 +11,18 @@ function ModalExampleModal() {
       open={open}
     >
       <Modal.Header>
-        <p>Quick Guide on KPenny Redeem  <Label as='a' color='red' tag> Upcoming </Label></p>
+        <p>BETA, USE AT YOUR OWN RISK<Label as='a' color='red' tag> Warning </Label></p>
       </Modal.Header>
       <Modal.Content>
-        <h4> To do BEFORE 4/15/2021 00:00 UTC</h4>
+        <h4>Dont forget to open the Zel server</h4>
         <Modal.Description>
-          <p>
-            1. Remove your liquidity pair (ABC/XYZ, ABC/KPY, KPY/XYZ) from the <NavLink to={ROUTE_POOL} onClick={() => setOpen(false)}>liquidity pool</NavLink>.
-          </p>
-          <p>
-            2. Swap your ABC, and XYZ tokens to KPY <NavLink to={ROUTE_SWAP} onClick={() => setOpen(false)}> here</NavLink>!
-          </p>
+          <p>Top right of the Zel wallet, enable server to connect to DAPPS</p>
           <Divider/>
-          <h4> To do AFTER 4/15/2021 00:00 UTC </h4>
-          <p>
-            3. Redeem your KPY to KDA <NavLink to={ROUTE_KPY_RED} onClick={() => setOpen(false)}> here</NavLink>!
-          </p>
+          <h4>LOW liquidity</h4>
+          <p>Make sure to trade very small amounts</p>
+          <Divider/>
+          <h4>Not responsible for any loss</h4>
+          <p>This is still in early stage</p>
         </Modal.Description>
       </Modal.Content>
       <Modal.Actions>

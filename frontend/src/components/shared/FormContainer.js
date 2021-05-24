@@ -7,25 +7,23 @@ const Container = styled.div`
   position: relative;
   display: flex;
   flex-flow: column;
-  padding: 20px 20px;
+  padding: 15px 15px;
   max-width: 385px;
   width: 100%;
-  border-radius: 10px;
+  border-radius: 30px;
   background-color: white;
 `;
 
 const Title = styled.span`
-  font-family: neue-bold;
-  font-size: 24px;
-  margin-bottom: 24px;
-  text-transform: capitalize;
+  font-size: 20px;
+  margin-bottom: 10px;
   text-align: center;
 `;
 
 const FormContainer = ({ title, containerStyle, titleStyle, children, onClose }) => {
   return (
     <Container style={containerStyle}>
-      {onClose && <CloseIcon style={{ cursor: 'pointer', position: 'absolute', top: 18, right: 14 }} onClick={onClose} />}
+      {onClose && <CloseIcon style={{ cursor: 'pointer', position: 'absolute', top: 20, right: 25, textTransform: "capitalize",}} onClick={onClose} />}
       {title && <Title style={titleStyle}>{title}</Title>}
       {children}
     </Container>

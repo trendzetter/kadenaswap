@@ -110,27 +110,7 @@ const TxView = ({ show, view, selectedToken, onTokenClick, onClose, token0, toke
           <SpaceBetweenRow>
             <Label>Gas Cost</Label>
             <Value>
-              <s>{`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}</s>
-              <span style={{marginLeft: 5, color: 'green'}}>FREE!</span>
-              <Popup
-                trigger={
-                  <Icon
-                  onClick={() => {
-                    window.open(
-                      'https://medium.com/kadena-io/the-first-crypto-gas-station-is-now-on-kadenas-blockchain-6dc43b4b3836',
-                      "_blank",
-                      'noopener,noreferrer'
-                    );
-                  }}
-                  name='help circle' style={{"marginLeft": "2px"}}/>
-                }
-                position='top center'
-              >
-                <Popup.Header>Why is Gas free?</Popup.Header>
-                <Popup.Content>
-                  Kadena has a novel concept called gas stations that allows smart contracts to pay for users' gas. This means you do not need to hold KDA to trade any token pair!
-                  </Popup.Content>
-              </Popup>
+              {`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}
             </Value>
           </SpaceBetweenRow>
         </TransactionsDetails>
@@ -174,27 +154,7 @@ const TxView = ({ show, view, selectedToken, onTokenClick, onClose, token0, toke
           <SpaceBetweenRow>
             <Label>Gas Cost</Label>
             <Value>
-              <s>{`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}</s>
-              <span style={{marginLeft: 5, color: 'green'}}>FREE!</span>
-              <Popup
-                trigger={
-                  <Icon
-                  onClick={() => {
-                    window.open(
-                      'https://medium.com/kadena-io/the-first-crypto-gas-station-is-now-on-kadenas-blockchain-6dc43b4b3836',
-                      "_blank",
-                      'noopener,noreferrer'
-                    );
-                  }}
-                  name='help circle' style={{"marginLeft": "2px"}}/>
-                }
-                position='top center'
-              >
-                <Popup.Header>Why is Gas free?</Popup.Header>
-                <Popup.Content>
-                  Kadena has a novel concept called gas stations that allows smart contracts to pay for users' gas. This means you do not need to hold KDA to trade any token pair!
-                  </Popup.Content>
-              </Popup>
+              {`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}
             </Value>
           </SpaceBetweenRow>
         </TransactionsDetails>
@@ -240,27 +200,7 @@ const TxView = ({ show, view, selectedToken, onTokenClick, onClose, token0, toke
           <SpaceBetweenRow>
             <Label>Gas Cost</Label>
             <Value>
-              <s>{`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}</s>
-              <span style={{marginLeft: 5, color: 'green'}}>FREE!</span>
-              <Popup
-                trigger={
-                  <Icon
-                  onClick={() => {
-                    window.open(
-                      'https://medium.com/kadena-io/the-first-crypto-gas-station-is-now-on-kadenas-blockchain-6dc43b4b3836',
-                      "_blank",
-                      'noopener,noreferrer'
-                    );
-                  }}
-                  name='help circle' style={{"marginLeft": "2px"}}/>
-                }
-                position='top center'
-              >
-                <Popup.Header>Why is Gas free?</Popup.Header>
-                <Popup.Content>
-                  Kadena has a novel concept called gas stations that allows smart contracts to pay for users' gas. This means you do not need to hold KDA to trade any token pair!
-                  </Popup.Content>
-              </Popup>
+              {`${gasUnit(pact.GAS_PRICE * pact.localRes.gas)} KDA`}
             </Value>
           </SpaceBetweenRow>
         </TransactionsDetails>
@@ -300,12 +240,6 @@ const TxView = ({ show, view, selectedToken, onTokenClick, onClose, token0, toke
               </span>
             </RowContainer>
           </Message>
-          {pact.localRes.result.error.message.includes('insufficient')
-          ?
-            <span style={{wordBreak: "break-all"}}>
-              TIP: Try setting a higher slippage amount
-            </span>
-          : <></>}
         </TransactionsDetails>
         <Button
           onClick={() => {

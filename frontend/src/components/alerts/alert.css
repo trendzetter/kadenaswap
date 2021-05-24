@@ -29,7 +29,7 @@
   background-color: #D20790;
   font-size: 12px;
   color: white;
-  background-image: linear-gradient(59deg, rgba(237, 9, 143, 1) 0%, rgba(122, 1, 150, 1) 100%) !important;
+  background-image: linear-gradient(59deg, #D20790 0%, #D20790 100%) !important;
   border: 1px solid purple;
   font-family: neue-bold !important;
   text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.3);

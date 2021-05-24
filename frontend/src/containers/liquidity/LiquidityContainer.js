@@ -160,7 +160,7 @@ const LiquidityContainer = (props) => {
       1: {msg: "Enter An Amount", status: false},
       2: {msg: "Supply", status: true},
       3: {msg: (token) => `Insufficient ${token} Balance`, status: false},
-      4: {msg:"Pair does not exist yet", status: false},
+      4: {msg:"Create A Pair", status: true},
       5: {msg:"Pair Already Exists", status: false},
       6: {msg: "Select different tokens", status: false}
     }
@@ -169,19 +169,14 @@ const LiquidityContainer = (props) => {
      if (pairExist) {
        setSelectedView("Add Liquidity")
      }
-     else return status[4];
-     // if (fromValues.coin!=="" && toValues.coin!=="" && fromValues.amount && toValues.amount){
-     //   return status[4];
-     // }
-     // else if (!fromValues.amount || !toValues.amount) return status[1];
-     // else if (Number(fromValues.amount) > Number(fromValues.balance)) return {...status[3], msg: status[3].msg(fromValues.coin)};
-     // else if (Number(toValues.amount) > Number(toValues.balance)) return {...status[3], msg: status[3].msg(toValues.coin)};
-     // else if (fromValues.coin === toValues.coin) return status[6];
-     // else return status[4]
-   }
-   else if (isNaN(pact.ratio)) {
-     return status[4];
-     // return {...status[2], status: false};
+     if (fromValues.coin!=="" && toValues.coin!=="" && fromValues.amount && toValues.amount){
+       return status[4];
+     }
+     else if (!fromValues.amount || !toValues.amount) return status[1];
+     else if (Number(fromValues.amount) > Number(fromValues.balance)) return {...status[3], msg: status[3].msg(fromValues.coin)};
+     else if (Number(toValues.amount) > Number(toValues.balance)) return {...status[3], msg: status[3].msg(toValues.coin)};
+     else if (fromValues.coin === toValues.coin) return status[6];
+     else return status[4]
    }
    else if (!fromValues.amount || !toValues.amount) return status[1];
    else if (Number(fromValues.amount) > Number(fromValues.balance)) return {...status[3], msg: status[3].msg(fromValues.coin)};
@@ -189,8 +184,7 @@ const LiquidityContainer = (props) => {
    else if (fromValues.coin === toValues.coin) return status[6];
    else {
      if (isNaN(pact.ratio)) {
-       return status[4];
-       // return {...status[2], status: false};
+       return {...status[2], status: false};
      } else
        return status[2];
    }
@@ -228,9 +222,9 @@ const LiquidityContainer = (props) => {
           }
         } else {
           setLoading(true)
-          setShowReview(false)
           const res = await pact.addLiquidityWallet(pact.tokenData[fromValues.coin], pact.tokenData[toValues.coin], fromValues.amount, toValues.amount);
           setShowTxModal(true)
+          setShowReview(false)
           setLoading(false)
           setFromValues({account: null, guard: null, balance: null, amount: '', coin: ""});
           setToValues({account: null, guard: null, balance: null, amount: '', coin: ""})

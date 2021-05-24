@@ -118,7 +118,6 @@ const Header = () => {
         <KDALogo style={{ cursor: 'pointer' }} onClick={() => history.push(ROUTE_INDEX)} />
         <Item to={ROUTE_SWAP}>swap</Item>
         <Item to={ROUTE_POOL}>pool</Item>
-        <Item to={ROUTE_WRAP}>wrap</Item>
         <Item to={ROUTE_STATS}>stats</Item>
 
       </LeftContainer>
@@ -141,7 +140,7 @@ const Header = () => {
               <span
                 onClick={async () => {
                   await window.open(
-                    `https://explorer.chainweb.com/testnet/tx/${pact.sendRes.reqKey}`,
+                    `https://explorer.chainweb.com/mainnet/tx/${pact.sendRes.reqKey}`,
                     "_blank",
                     'noopener,noreferrer'
                   );
@@ -186,7 +185,7 @@ const Header = () => {
         <Label
           style={{ padding: '10px 16px', color:"white", fontSize: 16 }}
         >
-          Bountyswap live on chain 1
+          Aswap live on chain 3
         </Label>
         </Item>
         {pact?.account.account ? (
@@ -229,7 +228,7 @@ const Header = () => {
             <HamburgerListContainer>
               <HamburgerItem to="/"
                 onClick={() => window.open(
-                  `https://kadena.io`,
+                  `https://anedak.com/`,
                   "_blank",
                   'noopener,noreferrer'
                 )}
@@ -250,7 +249,7 @@ const Header = () => {
               </HamburgerItem>
               <HamburgerItem to="/"
                 onClick={() => window.open(
-                  `https://discord.io/kadena`,
+                  `https://discord.gg/8qRgeNc`,
                   "_blank",
                   'noopener,noreferrer'
                 )}

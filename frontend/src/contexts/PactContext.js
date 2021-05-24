@@ -22,11 +22,11 @@ const savedNetwork = localStorage.getItem('network');
 const savedSlippage = localStorage.getItem('slippage');
 const savedSigning = localStorage.getItem('signing');
 const savedTtl = localStorage.getItem('ttl');
-const chainId = "1";
+const chainId = "3";
 const PRECISION = 12;
-const NETWORKID = 'mainnet01';
+const NETWORKID = "mainnet01";
 const FEE = 0.003
-const network = `https://api.chainweb.com/chainweb/0.0/${NETWORKID}/chain/${chainId}/pact`;
+const network = `https://api.chainweb.com/chainweb/0.0/mainnet01/chain/${chainId}/pact`;
 
 const creationTime = () => Math.round((new Date).getTime()/1000)-10;
 const GAS_PRICE = 0.000000000001;
@@ -65,7 +65,6 @@ export const PactProvider = (props) => {
   const [registered, setRegistered] = useState(false);
   const [ttl, setTtl] = useState((savedTtl ? savedTtl : 600));
   const [balances, setBalances] = useState(false);
-
   //TO FIX, not working when multiple toasts are there
   const toastId = React.useRef(null)
   // const [toastIds, setToastIds] = useState({})
@@ -234,7 +233,7 @@ export const PactProvider = (props) => {
   const getTotalTokenSupply = async (token0, token1) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(kswap.tokens.total-supply (kswap.exchange.get-pair-key ${token0} ${token1}))`,
+          pactCode: `(free.tokens.total-supply (free.exchange.get-pair-key ${token0} ${token1}))`,
           keyPairs: Pact.crypto.genKeyPair(),
           meta: Pact.lang.mkMeta("", chainId ,0.01,100000000, 28800, creationTime()),
         }, network);
@@ -250,7 +249,7 @@ export const PactProvider = (props) => {
   const createTokenPairLocal = async (token0, token1, amountDesired0, amountDesired1) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(kswap.exchange.create-pair
+          pactCode: `(free.exchange.create-pair
               ${token0.code}
               ${token1.code}
               ""
@@ -262,12 +261,12 @@ export const PactProvider = (props) => {
       try {
         let cmd = {
             pactCode: `
-            (kswap.exchange.create-pair
+            (free.exchange.create-pair
                 ${token0.code}
                 ${token1.code}
                 ""
             )
-            (kswap.exchange.add-liquidity
+            (free.exchange.add-liquidity
                 ${token0.code}
                 ${token1.code}
                 (read-decimal 'amountDesired0)
@@ -283,7 +282,7 @@ export const PactProvider = (props) => {
               clist: [
                 {name: `${token0.code}.TRANSFER`, args: [account.account, pair, Number(amountDesired0)]},
                 {name: `${token1.code}.TRANSFER`, args: [account.account, pair, Number(amountDesired1)]},
-                {name: "kswap.gas-station.GAS_PAYER", args: ["free-gas", {int: 1}, 1.0]},
+                {name: `coin.GAS`, args: []}
               ]
             },
             envData: {
@@ -293,7 +292,7 @@ export const PactProvider = (props) => {
               "amountMinimum0": reduceBalance(amountDesired0*(1-parseFloat(slippage)),tokenData[token0.name].precision),
               "amountMinimum1": reduceBalance(amountDesired1*(1-parseFloat(slippage)),tokenData[token1.name].precision)
             },
-            meta: Pact.lang.mkMeta("kswap-free-gas", chainId ,GAS_PRICE,5000,creationTime(), 600),
+            meta: Pact.lang.mkMeta(account.account, chainId ,GAS_PRICE,5000,creationTime(), 600),
             networkId: NETWORKID
           };
           let data = await Pact.fetch.local(cmd, network);
@@ -322,7 +321,7 @@ export const PactProvider = (props) => {
       }
       let pair = await getPairAccount(token0.code, token1.code);
       let cmd = {
-          pactCode: `(kswap.exchange.add-liquidity
+          pactCode: `(free.exchange.add-liquidity
               ${token0.code}
               ${token1.code}
               (read-decimal 'amountDesired0)
@@ -339,7 +338,7 @@ export const PactProvider = (props) => {
             clist: [
               {name: `${token0.code}.TRANSFER`, args: [account.account, pair, Number(amountDesired0)]},
               {name: `${token1.code}.TRANSFER`, args: [account.account, pair, Number(amountDesired1)]},
-              {name: "kswap.gas-station.GAS_PAYER", args: ["free-gas", {int: 1}, 1.0]},
+              {name: `coin.GAS`, args: []}
             ]
           },
           envData: {
@@ -349,7 +348,7 @@ export const PactProvider = (props) => {
             "amountMinimum0": reduceBalance(amountDesired0*(1-parseFloat(slippage)),tokenData[token0.name].precision),
             "amountMinimum1": reduceBalance(amountDesired1*(1-parseFloat(slippage)),tokenData[token1.name].precision)
           },
-          meta: Pact.lang.mkMeta("kswap-free-gas", chainId ,GAS_PRICE,3000,creationTime(), 600),
+          meta: Pact.lang.mkMeta(account.account, chainId ,GAS_PRICE,3000,creationTime(), 600),
           networkId: NETWORKID
         };
       let data = await Pact.fetch.local(cmd, network);
@@ -367,7 +366,7 @@ export const PactProvider = (props) => {
     try {
       let pair = await getPairAccount(token0.code, token1.code);
       const signCmd = {
-        pactCode: `(kswap.exchange.add-liquidity
+        pactCode: `(free.exchange.add-liquidity
             ${token0.code}
             ${token1.code}
             (read-decimal 'amountDesired0)
@@ -379,11 +378,11 @@ export const PactProvider = (props) => {
             (read-keyset 'user-ks)
           )`,
         caps: [
-          Pact.lang.mkCap("Gas Station", "free gas", "kswap.gas-station.GAS_PAYER", ["free-gas", {int: 1}, 1.0]),
+          Pact.lang.mkCap("Gas capability", "Pay gas", "coin.GAS", []),
           Pact.lang.mkCap("transfer capability", "Transfer Token to Pool", `${token0.code}.TRANSFER`, [account.account, pair, Number(amountDesired0)]),
           Pact.lang.mkCap("transfer capability", "Transfer Token to Pool", `${token1.code}.TRANSFER`, [account.account, pair, Number(amountDesired1)]),
         ],
-        sender: "kswap-free-gas",
+        sender: account.account,
         gasLimit: 3000,
         gasPrice: GAS_PRICE,
         chainId: chainId,
@@ -431,7 +430,7 @@ export const PactProvider = (props) => {
       let pairKey = await getPairKey(token0, token1);
       let pair = await getPairAccount(token0, token1);
       let cmd = {
-          pactCode: `(kswap.exchange.remove-liquidity
+          pactCode: `(free.exchange.remove-liquidity
               ${token0}
               ${token1}
               (read-decimal 'liquidity)
@@ -446,16 +445,15 @@ export const PactProvider = (props) => {
             publicKey: account.guard.keys[0],
             secretKey: privKey,
             clist: [
-              {name: `kswap.tokens.TRANSFER`, args: [pairKey, account.account, pair, Number(liquidity)]},
-              {name: `kswap.tokens.TRANSFER`, args: [pairKey, account.account, pair, Number(liquidity)]},
-              {name: "kswap.gas-station.GAS_PAYER", args: ["free-gas", {int: 1}, 1.0]},
+              {name: `free.tokens.TRANSFER`, args: [pairKey, account.account, pair, Number(liquidity)]},
+              {name: `coin.GAS`, args: []}
             ]
           },
           envData: {
             "user-ks": account.guard,
             "liquidity": reduceBalance(liquidity,PRECISION),
           },
-          meta: Pact.lang.mkMeta("kswap-free-gas", chainId ,GAS_PRICE,3000,creationTime(), 600),
+          meta: Pact.lang.mkMeta(account.account, chainId ,GAS_PRICE,3000,creationTime(), 600),
         };
         setCmd(cmd);
         let data = await Pact.fetch.local(cmd, network);
@@ -474,7 +472,7 @@ export const PactProvider = (props) => {
       let pairKey = await getPairKey(token0, token1);
       let pair = await getPairAccount(token0, token1);
       const signCmd = {
-        pactCode:`(kswap.exchange.remove-liquidity
+        pactCode:`(free.exchange.remove-liquidity
             ${token0}
             ${token1}
             (read-decimal 'liquidity)
@@ -485,11 +483,10 @@ export const PactProvider = (props) => {
             (read-keyset 'user-ks)
           )`,
         caps: [
-          Pact.lang.mkCap("Gas Station", "free gas", "kswap.gas-station.GAS_PAYER", ["free-gas", {int: 1}, 1.0]),
-          Pact.lang.mkCap("transfer capability", "Transfer Token to Pool", `kswap.tokens.TRANSFER`, [pairKey, account.account, pair, Number(liquidity)]),
-          Pact.lang.mkCap("transfer capability", "Transfer Token to Pool", `kswap.tokens.TRANSFER`, [pairKey, account.account, pair, Number(liquidity)]),
+          Pact.lang.mkCap("Gas capability", "Pay gas", "coin.GAS", []),
+          Pact.lang.mkCap("transfer capability", "Transfer Token to Pool", `free.tokens.TRANSFER`, [pairKey, account.account, pair, Number(liquidity)]),
         ],
-        sender: "kswap-free-gas",
+        sender: account.account,
         gasLimit: 3000,
         gasPrice: GAS_PRICE,
         chainId: chainId,
@@ -524,7 +521,7 @@ export const PactProvider = (props) => {
   const getPairAccount = async (token0, token1) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(at 'account (kswap.exchange.get-pair ${token0} ${token1}))`,
+          pactCode: `(at 'account (free.exchange.get-pair ${token0} ${token1}))`,
           meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
         }, network);
         if (data.result.status === "success"){
@@ -539,7 +536,7 @@ export const PactProvider = (props) => {
   const getPair = async (token0, token1) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(kswap.exchange.get-pair ${token0} ${token1})`,
+          pactCode: `(free.exchange.get-pair ${token0} ${token1})`,
           keyPairs: Pact.crypto.genKeyPair(),
           meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
         }, network);
@@ -558,7 +555,7 @@ export const PactProvider = (props) => {
   const getPairKey = async (token0, token1) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(kswap.exchange.get-pair-key ${token0} ${token1})`,
+          pactCode: `(free.exchange.get-pair-key ${token0} ${token1})`,
           meta: Pact.lang.mkMeta(account.account, chainId ,GAS_PRICE,3000,creationTime(), 600),
         }, network);
         if (data.result.status === "success"){
@@ -572,7 +569,7 @@ export const PactProvider = (props) => {
   const getPairAccountBalance = async (token0, token1, account) => {
     try {
       let data = await Pact.fetch.local({
-          pactCode: `(kswap.tokens.get-balance (kswap.exchange.get-pair-key ${token0} ${token1}) ${JSON.stringify(account)})`,
+          pactCode: `(free.tokens.get-balance (free.exchange.get-pair-key ${token0} ${token1}) ${JSON.stringify(account)})`,
           meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
         }, network);
         if (data.result.status === "success"){
@@ -584,123 +581,64 @@ export const PactProvider = (props) => {
   }
 
   const getPairListAccountBalance = async (account) => {
+    let pairList = await Promise.all(Object.values(pairTokens).map(async pair => {
       try {
-        const tokenPairList = Object.keys(pairList).reduce((accum, pair) => {
-          accum+=`[${ pair.split(":").join(" ")}] `
-          return accum
-        }, "")
         let data = await Pact.fetch.local({
             pactCode: `
-            (namespace 'free)
-
-            (module kswap-read G
-
-              (defcap G ()
-                true)
-
-              (defun pair-info (pairList:list)
-                (let* (
-                  (token0 (at 0 pairList))
-                  (token1 (at 1 pairList))
-                  (p (kswap.exchange.get-pair token0 token1))
-                  (reserveA (kswap.exchange.reserve-for p token0))
-                  (reserveB (kswap.exchange.reserve-for p token1))
-                  (totalBal (kswap.tokens.total-supply (kswap.exchange.get-pair-key token0 token1)))
-                  (acctBal
-                      (try 0.0 (kswap.tokens.get-balance (kswap.exchange.get-pair-key token0 token1) ${JSON.stringify(account)})
-                    ))
-                )
-                [(kswap.exchange.get-pair-key token0 token1)
-                 reserveA
-                 reserveB
-                 totalBal
-                 acctBal
-                 (* reserveA (/ acctBal totalBal))
-                 (* reserveB (/ acctBal totalBal))
-               ]
-              ))
-            )
-            (map (kswap-read.pair-info) [${tokenPairList}])
+            (use free.exchange)
+            (let*
+              (
+                (p (get-pair ${tokenData[pair.token0].code} ${tokenData[pair.token1].code}))
+                (reserveA (reserve-for p ${tokenData[pair.token0].code}))
+                (reserveB (reserve-for p ${tokenData[pair.token1].code}))
+                (totalBal (free.tokens.total-supply (free.exchange.get-pair-key ${tokenData[pair.token0].code} ${tokenData[pair.token1].code})))
+                (acctBal (free.tokens.get-balance (free.exchange.get-pair-key ${tokenData[pair.token0].code} ${tokenData[pair.token1].code}) ${JSON.stringify(account)}))
+              )[acctBal totalBal reserveA reserveB (* reserveA (/ acctBal totalBal))(* reserveB (/ acctBal totalBal))])
              `,
             meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
           }, network);
         if (data.result.status === "success"){
-          let dataList = data.result.data.reduce((accum, data) => {
-            accum[data[0]] = {
-              balance: data[4],
-              supply: data[3],
-              reserves:[data[1], data[2]],
-              pooledAmount: [data[5], data[6]]
-            };
-            return accum;
-          }, {})
-          const pairList = Object.values(pairTokens).map(pair => {
-            return {
-              ...pair,
-              ...dataList[pair.name]
-             }
-          })
-          setPairListAccount(pairList);
+          return {...pair,
+              balance: data.result.data[0],
+              supply: data.result.data[1],
+              reserves:[data.result.data[2],  data.result.data[3]],
+              pooledAmount: [data.result.data[4],  data.result.data[5]]
+            }
         }
       } catch (e) {
         console.log(e)
       }
+    }))
+    setPairListAccount(pairList);
   }
 
   const getPairList = async () => {
+    let pairList = await Promise.all(Object.values(pairTokens).map(async pair => {
       try {
-        const tokenPairList = Object.keys(pairList).reduce((accum, pair) => {
-          accum+=`[${ pair.split(":").join(" ")}] `
-          return accum
-        }, "")
         let data = await Pact.fetch.local({
             pactCode: `
-            (namespace 'free)
-
-            (module kswap-read G
-
-              (defcap G ()
-                true)
-
-              (defun pair-info (pairList:list)
-                (let* (
-                  (token0 (at 0 pairList))
-                  (token1 (at 1 pairList))
-                  (p (kswap.exchange.get-pair token0 token1))
-                  (reserveA (kswap.exchange.reserve-for p token0))
-                  (reserveB (kswap.exchange.reserve-for p token1))
-                  (totalBal (kswap.tokens.total-supply (kswap.exchange.get-pair-key token0 token1)))
-                )
-                [(kswap.exchange.get-pair-key token0 token1)
-                 reserveA
-                 reserveB
-                 totalBal
-               ]
-              ))
-            )
-            (map (kswap-read.pair-info) [${tokenPairList}])
+            (use free.exchange)
+            (let*
+              (
+                (p (get-pair ${tokenData[pair.token0].code} ${tokenData[pair.token1].code}))
+                (reserveA (reserve-for p ${tokenData[pair.token0].code}))
+                (reserveB (reserve-for p ${tokenData[pair.token1].code}))
+                (totalBal (free.tokens.total-supply (free.exchange.get-pair-key ${tokenData[pair.token0].code} ${tokenData[pair.token1].code})))
+              )[totalBal reserveA reserveB])
              `,
             meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
           }, network);
         if (data.result.status === "success"){
-          let dataList = data.result.data.reduce((accum, data) => {
-            accum[data[0]] = {
-              supply: data[3],
-              reserves:[data[1], data[2]]
-            };
-            return accum;
-          }, {})
-          const pairList = Object.values(pairTokens).map(pair => {
-            return {
-              ...pair,
-              ...dataList[pair.name]
-             }
-          })
-          setPairList(pairList);
+          return {...pair,
+              supply: data.result.data[0],
+              reserves:[data.result.data[1],  data.result.data[2]]
+            }
         }
       } catch (e) {
         console.log(e)
       }
+    }))
+    setPairList(pairList);
   }
 
 
@@ -708,7 +646,7 @@ export const PactProvider = (props) => {
     try {
       let data = await Pact.fetch.local({
           pactCode: `
-          (use kswap.exchange)
+          (use free.exchange)
           (let*
             (
               (p (get-pair ${token0} ${token1}))
@@ -733,14 +671,14 @@ export const PactProvider = (props) => {
     try {
       let data = await Pact.fetch.local({
           pactCode: `
-          (use kswap.exchange)
+          (use free.exchange)
           (let*
             (
               (p (get-pair ${token0} ${token1}))
               (reserveA (reserve-for p ${token0}))
               (reserveB (reserve-for p ${token1}))
-              (totalBal (kswap.tokens.total-supply (kswap.exchange.get-pair-key ${token0} ${token1})))
-              (acctBal (kswap.tokens.get-balance (kswap.exchange.get-pair-key ${token0} ${token1}) ${JSON.stringify(account)}))
+              (totalBal (free.tokens.total-supply (free.exchange.get-pair-key ${token0} ${token1})))
+              (acctBal (free.tokens.get-balance (free.exchange.get-pair-key ${token0} ${token1}) ${JSON.stringify(account)}))
             )[(* reserveA (/ acctBal totalBal))(* reserveB (/ acctBal totalBal))])
            `,
            meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
@@ -757,7 +695,7 @@ export const PactProvider = (props) => {
     try {
       let data = await Pact.fetch.local({
           pactCode: `
-          (kswap.tokens.get-tokens)
+          (free.tokens.get-tokens)
            `,
            meta: Pact.lang.mkMeta("", chainId ,GAS_PRICE,3000,creationTime(), 600),
         }, network);
@@ -777,7 +715,7 @@ export const PactProvider = (props) => {
     try {
       let pair = await getPairAccount(token0.address, token1.address);
 
-      const inPactCode = `(kswap.exchange.swap-exact-in
+      const inPactCode = `(free.exchange.swap-exact-in
           (read-decimal 'token0Amount)
           (read-decimal 'token1AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -785,7 +723,7 @@ export const PactProvider = (props) => {
           ${JSON.stringify(account.account)}
           (read-keyset 'user-ks)
         )`
-      const outPactCode = `(kswap.exchange.swap-exact-out
+      const outPactCode = `(free.exchange.swap-exact-out
           (read-decimal 'token1Amount)
           (read-decimal 'token0AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -799,15 +737,7 @@ export const PactProvider = (props) => {
             publicKey: account.guard.keys[0],
             secretKey: privKey,
             clist: [
-              { name: `${token0.address}.TRANSFER`,
-                args: [
-                  account.account,
-                  pair,
-                  isSwapIn
-                    ? reduceBalance(token0.amount, tokenData[token0.coin].precision)
-                    : reduceBalance(token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision)
-                ]
-              },
+              {name: `${token0.address}.TRANSFER`, args: [account.account, pair,  reduceBalance(isSwapIn ? token0.amount : token0.amount*(1+parseFloat(slippage), tokenData[token0.name].precision))]},
             ]
           },
           envData: {
@@ -840,7 +770,7 @@ export const PactProvider = (props) => {
       }
       const ct = creationTime();
       let pair = await getPairAccount(token0.address, token1.address);
-      const inPactCode = `(kswap.exchange.swap-exact-in
+      const inPactCode = `(free.exchange.swap-exact-in
           (read-decimal 'token0Amount)
           (read-decimal 'token1AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -848,7 +778,7 @@ export const PactProvider = (props) => {
           ${JSON.stringify(account.account)}
           (read-keyset 'user-ks)
         )`
-      const outPactCode = `(kswap.exchange.swap-exact-out
+      const outPactCode = `(free.exchange.swap-exact-out
           (read-decimal 'token1Amount)
           (read-decimal 'token0AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -862,18 +792,13 @@ export const PactProvider = (props) => {
             publicKey: account.guard.keys[0],
             secretKey: privKey,
             clist: [
-              { name:
-                "kswap.gas-station.GAS_PAYER",
-                args: ["free-gas", {int: 1}, 1.0]
-              },
+			  {name: "coin.GAS", args: []},
               { name:
                 `${token0.address}.TRANSFER`,
                 args: [
                   account.account,
                   pair,
-                  isSwapIn
-                    ? reduceBalance(token0.amount, tokenData[token0.coin].precision)
-                    : reduceBalance(token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision)
+                  reduceBalance(isSwapIn ? token0.amount : token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision),
                 ]
               },
             ]
@@ -886,7 +811,7 @@ export const PactProvider = (props) => {
             "token0AmountWithSlippage": reduceBalance(token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision)
           },
           networkId: NETWORKID,
-          meta: Pact.lang.mkMeta("kswap-free-gas", chainId, GAS_PRICE, 3000, ct, 600),
+          meta: Pact.lang.mkMeta(account.account, chainId, GAS_PRICE, 3000, ct, 600),
       }
       setCmd(cmd);
       let data = await Pact.fetch.local(cmd, network);
@@ -901,7 +826,7 @@ export const PactProvider = (props) => {
 
   const swapWallet = async (token0, token1, isSwapIn) => {
     try {
-      const inPactCode = `(kswap.exchange.swap-exact-in
+      const inPactCode = `(free.exchange.swap-exact-in
           (read-decimal 'token0Amount)
           (read-decimal 'token1AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -909,7 +834,7 @@ export const PactProvider = (props) => {
           ${JSON.stringify(account.account)}
           (read-keyset 'user-ks)
         )`
-      const outPactCode = `(kswap.exchange.swap-exact-out
+      const outPactCode = `(free.exchange.swap-exact-out
           (read-decimal 'token1Amount)
           (read-decimal 'token0AmountWithSlippage)
           [${token0.address} ${token1.address}]
@@ -920,26 +845,19 @@ export const PactProvider = (props) => {
       const signCmd = {
         pactCode: (isSwapIn ? inPactCode : outPactCode),
         caps: [
-          Pact.lang.mkCap(
-            "Gas Station",
-            "free gas",
-            "kswap.gas-station.GAS_PAYER",
-            ["free-gas", {int: 1}, 1.0]
-          ),
+          Pact.lang.mkCap("Gas capability", "Pay gas", "coin.GAS", []),
           Pact.lang.mkCap(
             "transfer capability",
-            "trasnsfer token in",
+            "transfer token in",
             `${token0.address}.TRANSFER`,
             [
               account.account,
               pair.account,
-              isSwapIn
-                ? reduceBalance(token0.amount, tokenData[token0.coin].precision)
-                : reduceBalance(token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision)
+              reduceBalance(isSwapIn ? token0.amount : reduceBalance(token0.amount*(1+parseFloat(slippage)), tokenData[token0.coin].precision)),
             ]
           ),
         ],
-        sender: "kswap-free-gas",
+        sender: account.account,
         gasLimit: 3000,
         gasPrice: GAS_PRICE,
         chainId: chainId,
@@ -952,7 +870,7 @@ export const PactProvider = (props) => {
           "token1AmountWithSlippage": reduceBalance(token1.amount*(1-parseFloat(slippage)), tokenData[token1.coin].precision)
         },
         signingPubKey: account.guard.keys[0],
-        networkId: NETWORKID,
+        networkId: "mainnet01",
       }
       //alert to sign tx
       walletLoading();
@@ -1137,17 +1055,14 @@ const kpennyReserveLocal = async (amtKda) => {
       return -1
     }
     const ct = creationTime();
-    const pactCode = `(kswap.kpenny.reserve ${JSON.stringify(account.account)} (read-decimal 'amt))`
+    const pactCode = `(free.kpenny.reserve ${JSON.stringify(account.account)} (read-decimal 'amt))`
     const cmd = {
         pactCode: pactCode,
         keyPairs: {
           publicKey: account.guard.keys[0],
           secretKey: privKey,
           clist: [
-            { name:
-              "kswap.gas-station.GAS_PAYER",
-              args: ["free-gas", {int: 1}, 1.0]
-            },
+			{name: "coin.GAS", args: []},
             { name:
               `coin.TRANSFER`,
               args: [
@@ -1162,7 +1077,7 @@ const kpennyReserveLocal = async (amtKda) => {
           "amt": amtKda
         },
         networkId: NETWORKID,
-        meta: Pact.lang.mkMeta("kswap-free-gas", chainId, GAS_PRICE, 3000, ct, 600),
+        meta: Pact.lang.mkMeta(account.account, chainId, GAS_PRICE, 3000, ct, 600),
     }
     setCmd(cmd);
     let data = await Pact.fetch.local(cmd, network);
@@ -1177,19 +1092,14 @@ const kpennyReserveLocal = async (amtKda) => {
 
 const kpennyReserveWallet = async (amtKda) => {
   try {
-    const pactCode = `(kswap.kpenny.reserve ${JSON.stringify(account.account)} (read-decimal 'amt))`
+    const pactCode = `(free.kpenny.reserve ${JSON.stringify(account.account)} (read-decimal 'amt))`
     const signCmd = {
       pactCode: pactCode,
       caps: [
-        Pact.lang.mkCap(
-          "Gas Station",
-          "free gas",
-          "kswap.gas-station.GAS_PAYER",
-          ["free-gas", {int: 1}, 1.0]
-        ),
+        Pact.lang.mkCap("Gas capability", "Pay gas", "coin.GAS", []),
         Pact.lang.mkCap(
           "transfer capability",
-          "trasnsfer token in",
+          "transfer token in",
           `coin.TRANSFER`,
           [
             account.account,
@@ -1198,7 +1108,7 @@ const kpennyReserveWallet = async (amtKda) => {
           ]
         ),
       ],
-      sender: "kswap-free-gas",
+      sender: account.account,
       gasLimit: 3000,
       gasPrice: GAS_PRICE,
       chainId: chainId,
@@ -1244,17 +1154,14 @@ const kpennyRedeemLocal = async () => {
       return -1
     }
     const ct = creationTime();
-    const pactCode = `(kswap.kpenny.redeem ${JSON.stringify(account.account)} ${JSON.stringify(account.account)} (read-keyset "user-ks"))`
+    const pactCode = `(free.kpenny.redeem ${JSON.stringify(account.account)} ${JSON.stringify(account.account)} (read-keyset "user-ks"))`
     const cmd = {
         pactCode: pactCode,
         keyPairs: {
           publicKey: account.guard.keys[0],
           secretKey: privKey,
           clist: [
-            // { name:
-            //   "kswap.gas-station.GAS_PAYER",
-            //   args: ["free-gas", {int: 1}, 1.0]
-            // },
+            // {name: "coin.GAS", args: []},
             // { name:
             //   `coin.TRANSFER`,
             //   args: [
@@ -1286,7 +1193,7 @@ const kpennyRedeemLocal = async () => {
 
 const kpennyRedeemWallet = async () => {
   try {
-    const pactCode = `(kswap.kpenny.redeem ${JSON.stringify(account.account)} ${JSON.stringify(account.account)} (read-keyset "user-ks"))`
+    const pactCode = `(free.kpenny.redeem ${JSON.stringify(account.account)} ${JSON.stringify(account.account)} (read-keyset "user-ks"))`
     const signCmd = {
       pactCode: pactCode,
       caps: [],
@@ -1325,7 +1232,6 @@ const kpennyRedeemWallet = async () => {
   }
 }
 
-
 var mkReq = function(cmd) {
   return {
     headers: {
@@ -1347,7 +1253,6 @@ var parseRes = async function (raw) {
      return resTEXT;
    }
 };
-
 
 //------------------------------------------------------------------------------------------------------------------------
 //                  END KPENNY FUNCTIONS ONLY
@@ -1466,7 +1371,7 @@ function realizedLPFee(numHops=1) {
         kpennyReserveWallet,
         kpennyRedeemWallet,
         kpennyRedeemLocal,
-        computeIn,
+		computeIn,
         computeOut,
         computePriceImpact,
         priceImpactWithoutFee
@@ -1495,7 +1400,7 @@ export const withPactContext = (Component) => (props) => (
 //             onClose: async () => {
 //               await toast.dismiss(toastId)
 //               await window.open(
-//                 `https://explorer.chainweb.com/testnet/tx/${res.reqKey}`,
+//                 `https://explorer.chainweb.com/mainnet/tx/${res.reqKey}`,
 //                 "_blank",
 //                 'noopener,noreferrer'
 //               );
@@ -1514,7 +1419,7 @@ export const withPactContext = (Component) => (props) => (
 //             onClose: async () => {
 //               await toast.dismiss(toastId)
 //               await window.open(
-//                 `https://explorer.chainweb.com/testnet/tx/${res.reqKey}`,
+//                 `https://explorer.chainweb.com/mainnet/tx/${res.reqKey}`,
 //                 "_blank",
 //                 'noopener,noreferrer'
 //               );

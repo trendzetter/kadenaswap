@@ -17,6 +17,7 @@ const StyledButton = styled(SUIButton)`
     opacity: ${({ hover }) => (hover ? 0.7 : 1.0)+' !important'};
     cursor: pointer;
   }
+  border-radius: 2rem !important;
 `;
 
 const Button = ({ props, disabled, buttonStyle, background, color, fontSize, children, onClick, loading, hover }) => {

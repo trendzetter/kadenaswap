@@ -6,7 +6,7 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
-  margin: 16px 0px;
+  margin: 15px 0px;
 `;
 
 const Button = styled.button`
@@ -20,7 +20,15 @@ const Button = styled.button`
   height: 32px;
   padding: 0;
   margin: 0;
-  background: ${({ theme: { buttonBackgroundGradient } }) => buttonBackgroundGradient};
+  background: #c56cf0;
+  transition: all .1s ease-in-out;
+  :hover {
+    background-color: #9b59b6;
+    transform: scale(1.1);
+  }
+  :active {
+    background-color: #8e44ad;
+  }
 `;
 
 const Track = styled.div`

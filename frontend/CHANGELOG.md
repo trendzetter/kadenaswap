@@ -1,5 +1,8 @@
 # `kadenaswap frontend` Changelog
 
+## (2021-05-24)
+- Rename and rebrand
+
 ## (2021-03-22)
 - Add price impact field in swap (#121)
 - Improve performance in fetching pool stats, pool liquidity and add loader (#78)

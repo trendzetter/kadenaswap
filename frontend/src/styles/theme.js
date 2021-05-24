@@ -20,7 +20,7 @@ export const theme = {
   },
   inputTokenWidth: 78,
   inputSelectButtonWidth: 81,
-  buttonBackgroundGradient: 'linear-gradient(59deg, rgba(237, 9, 143, 1) 0%, rgba(122, 1, 150, 1) 100%) !important'
+  buttonBackgroundGradient: '#c56cf0 !important'
 };
 
 export default theme;

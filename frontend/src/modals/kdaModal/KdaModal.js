@@ -13,6 +13,7 @@ import swal from '@sweetalert/with-react'
 import walletAccts from '../../components/alerts/walletAccts'
 import walletError from '../../components/alerts/walletError'
 import selectAcct from '../../components/alerts/selectAcct'
+import '../../styles/inputoverride.css';
 
 export default function Account(props) {
 
@@ -76,7 +77,7 @@ export default function Account(props) {
       <Modal.Content image>
         <Modal.Description>
           <Header style={{ marginBottom: 24 }}>
-            <span style={{ fontSize: 24, fontFamily: 'neue-bold', color: '#3a4750' }}>Your KDA Account (chain 1)</span>
+            <span style={{ fontSize: 24, fontFamily: 'neue-bold', color: '#3a4750' }}>Your KDA Account (chain 3)</span>
           </Header>
           <Input
             placeholder="Enter Account"
@@ -121,16 +122,7 @@ export default function Account(props) {
               >
                 get zelcore accounts
               </Button>
-              <div style={{}}>
-                Still Confused? Watch
-                <a
-                  style={{ marginLeft: 3}}
-                  href="https://www.youtube.com/watch?v=Mv-UtypPsZ4&feature=youtu.be"
-                  target="_blank"
-                >
-                  The tutorial
-                </a>
-              </div>
+
               </>
             }
           />
@@ -149,7 +141,7 @@ export default function Account(props) {
             <></>
           ) : (
             <Header>
-              <span style={{ color: "red", fontSize: 24, fontFamily: 'neue-bold' }}>Account Does Not Exist</span>
+              <span style={{ color: "red", fontSize: 24, fontFamily: 'neue-bold' }}>Account Does Not Exist (Send KDA to Chain 3)</span>
             </Header>
           )}
           <div style={{ opacity: pact?.account?.account ? 1 : 0.3, marginTop: 30, marginBottom: 30 }}>
@@ -159,8 +151,8 @@ export default function Account(props) {
               <span>
               <Button
                 background="white"
-                color="#9C0394"
-                buttonStyle={{ border: '1px solid #9C0394' }}
+                color="#c56cf0"
+                buttonStyle={{ border: '1px solid #c56cf0' }}
                 fontSize={16}
                 onClick={() => {
                   setLocked(false)
@@ -292,8 +284,8 @@ export default function Account(props) {
       <Modal.Actions>
         <Button
           background="white"
-          color="#9C0394"
-          buttonStyle={{ border: '1px solid #9C0394', padding: '10px 50px' }}
+          color="#c56cf0"
+          buttonStyle={{ border: '1px solid #c56cf0', padding: '10px 50px' }}
           fontSize={16}
           onClick={() => {
             resetValues();
