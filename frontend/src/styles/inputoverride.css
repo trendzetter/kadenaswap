@@ -1,5 +1,9 @@
-.ui.input>input, .ui.purple.message, .ui.menu, .ui.message{
+.ui.input>input, .ui.purple.message, .ui.menu {
     border-radius: 5rem;
+}
+
+.ui.message {
+    border-radius: 1.5rem;
 }
 
 .ui.input>input:hover {
