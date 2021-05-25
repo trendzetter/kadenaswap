@@ -1,7 +1,6 @@
-.ui.input>input, .ui.purple.message, .ui.menu{
-    border-radius: 3rem;
+.ui.input>input, .ui.purple.message, .ui.menu, .ui.message{
+    border-radius: 5rem;
 }
-
 
 .ui.input>input:hover {
     border-color: #b8b8b8;

@@ -6,11 +6,26 @@ import { ReactComponent as ArrowDown } from '../../assets/images/shared/arrow-do
 const Container = styled.div`
   cursor: pointer;
   position: absolute;
-  top: 30%;
-  right: 8px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  top: 19%;
+  right: 10px;
+  max-height: 22px;
+  padding: 15px !important;
+  border-radius: 2rem;
+  background: #e6e6e6;
+  gap: 5px;
+
+  :hover {
+    background: #d6d6d6;
+  }
+  :active {
+    background: #b1b1b1;
+  }
+
   min-width: ${({ theme: { inputTokenWidth } }) => `${inputTokenWidth}px`};
 
   svg:first-child {
@@ -19,7 +34,6 @@ const Container = styled.div`
 
   span {
     font-size: 16px;
-    margin-right: 13px;
   }
 `;
 
