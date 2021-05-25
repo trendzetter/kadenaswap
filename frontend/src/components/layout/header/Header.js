@@ -78,6 +78,9 @@ const Item = styled(NavLink)`
     opacity: 0.7;
     cursor: pointer;
   }
+  &:active {
+    opacity: 0.5;
+  }
 `;
 
 const HamburgerListContainer = styled.div`

@@ -244,7 +244,7 @@ const SwapContainer = () => {
         {(!isNaN(pact.ratio) && fromValues.amount && fromValues.coin && toValues.amount && toValues.coin
           ?
   	         <>
-              <RowContainer>
+              <RowContainer style={{ marginTop: 15 }}>
                 <Label>price</Label>
                 <span>{`${reduceBalance(pact.ratio*(1+priceImpact))} ${fromValues.coin} per ${toValues.coin}`}</span>
               </RowContainer>
