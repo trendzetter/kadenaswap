@@ -24,8 +24,8 @@ const LabelsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 4px;
-  margin-left: 2px;
-  margin-right: 2px;
+  margin-left: 10px;
+  margin-right: 10px;
   span {
     font-size: 13px;
     text-transform: capitalize;
