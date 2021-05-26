@@ -16,15 +16,14 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  justify-content: center;
+    gap: 1rem;
 `;
 
 const RightContainer = styled.div`
   display: flex;
   align-items: center;
 
-  & > *:first-child {
-    margin-right: 13px;
-  }
 
   & > *:not(:first-child):not(:last-child) {
     margin-right: 14px;
@@ -88,10 +87,10 @@ const LiquidityList = (props) => {
         </Message.Content>
       </Message>
       <FormContainer title="Your Liquidity">
-        <RightContainer>
+        <RightContainer style={{ justifyContent: "center", gap: "1rem"}}>
           <Button
 		     disabled
-             buttonStyle={{ marginLeft: 24 }}
+             
              onClick={() => props.selectCreatePair()}>
              Create a pair
           </Button>

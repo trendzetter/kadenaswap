@@ -12,6 +12,7 @@ import TxView from '../components/shared/TxView';
 import { PactContext } from '../contexts/PactContext';
 import { throttle, debounce } from "throttle-debounce";
 import pwError from '../components/alerts/pwError'
+import '../styles/inputoverride.css';
 
 const Container = styled.div`
   display: flex;
