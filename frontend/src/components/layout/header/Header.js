@@ -242,7 +242,7 @@ const Header = () => {
               <HamburgerItem to="/"
                 style={{ paddingTop: 9, paddingBottom: 9 }}
                 onClick={() => window.open(
-                  `https://github.com/kadena-io/kadenaswap`,
+                  `https://github.com/Thanos420NoScope/Anedakswap`,
                   "_blank",
                   'noopener,noreferrer'
                 )}
