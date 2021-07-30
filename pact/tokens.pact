@@ -1,6 +1,7 @@
-(enforce-pact-version "3.7")
+(define-keyset 'kadenaswap-keyset (read-keyset "kadenaswap-keyset"))
 
-(namespace (read-msg 'ns))
+(namespace "free")
+(enforce-pact-version "3.7")
 
 (module tokens GOVERNANCE
 
@@ -30,7 +31,7 @@
   (defconst ISSUER_KEY "I")
 
   (defcap GOVERNANCE ()
-    (enforce-guard (keyset-ref-guard 'swap-ns-admin)))
+    (enforce-guard (keyset-ref-guard 'kadenaswap-keyset)))
 
   (defcap DEBIT (token:string sender:string)
     (enforce-guard
@@ -39,6 +40,9 @@
 
   (defcap CREDIT (token:string receiver:string) true)
 
+  (defcap UPDATE_SUPPLY ()
+    "private cap for update-supply"
+    true)
 
   (defcap ISSUE ()
     (enforce-guard (at 'guard (read issuers ISSUER_KEY)))
@@ -55,7 +59,8 @@
   )
 
   (defun init-issuer (guard:guard)
-    (insert issuers ISSUER_KEY {'guard: guard})
+    (with-capability (GOVERNANCE)
+      (insert issuers ISSUER_KEY {'guard: guard}))
   )
 
   (defun key ( token:string account:string )
@@ -220,7 +225,8 @@
       (update ledger (key token account)
         { "balance" : (- balance amount) }
         ))
-    (update-supply token (- amount))
+    (with-capability (UPDATE_SUPPLY)
+      (update-supply token (- amount)))
   )
 
 
@@ -247,11 +253,12 @@
         , "token"   : token
         , "account" : account
         })
-
-      (update-supply token amount)
+      (with-capability (UPDATE_SUPPLY)
+        (update-supply token amount))
       ))
 
   (defun update-supply (token:string amount:decimal)
+    (require-capability (UPDATE_SUPPLY))
     (with-default-read supplies token
       { 'supply: 0.0 }
       { 'supply := s }
