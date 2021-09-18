@@ -25,7 +25,7 @@
 (env-keys ['admin])
 (load "pool.pact")
 
-(env-dynref fungible-v2 coin)
+; (env-dynref fungible-v2 coin)
 (verify "test.pool")
 (load "relay.pact")
 (verify "test.relay")

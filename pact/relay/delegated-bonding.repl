@@ -1,0 +1,16 @@
+(load "relay.repl")
+
+(env-data
+    {  'delegated-bonding-admin: ['admin],
+       'ns: 'test
+     })
+
+(define-keyset 'delegated-bonding-admin)
+(env-keys ['admin])
+
+
+(load "delegated-bonding.pact")
+
+
+
+
