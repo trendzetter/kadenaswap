@@ -1,4 +1,3 @@
-
 (namespace (read-msg 'ns)) 
 
 (module delegated-bonding GOVERNANCE
@@ -21,7 +20,7 @@
   
   (deftable multis:{multi}) ;; stored by multi KDA account
 
-  (deftable tranches:{tranche}) ;; stored by multi KDA account
+  (deftable tranches:{tranche}) 
 
   (defun wrap-new-bond:string
     ( pool:string    ;; Bond pool name

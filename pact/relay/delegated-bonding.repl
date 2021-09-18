@@ -1,8 +1,12 @@
 (load "relay.repl")
 
 (env-data
-    {  'delegated-bonding-admin: ['admin],
-       'ns: 'test
+    {  'delegated-bonding-admin: ['admin]
+     ,  'ns: 'test
+     , 'relay-coin-account: 'delegated-bonding-bank
+     , 'lockup: 30
+     , 'unlock: 20
+     , 'bond: 10000
      })
 
 (define-keyset 'delegated-bonding-admin)
