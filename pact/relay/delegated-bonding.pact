@@ -6,7 +6,9 @@
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
   )
 
-  (defschema tranche
+  (defconst POOL "bonding-tranches-pool")
+
+  (defschema tranche-schema
     multi:string       ;; Name of the multi to subscribe
     account:string     ;; KDA account
     amount:decimal     ;; tranche amount      
@@ -15,12 +17,12 @@
   (defschema multi
    account:string               ;; KDA account
    size:decimal                 ;; bond size
-   tranches:[object{tranche}]   ;; tranches
+   tranches:[object{tranche-schema}]   ;; tranches
   )
   
   (deftable multis:{multi}) ;; stored by multi KDA account
 
-  (deftable tranches:{tranche}) 
+  (deftable tranches:{tranche-schema}) 
 
   (defun wrap-new-bond:string
     ( pool:string    ;; Bond pool name
@@ -30,12 +32,28 @@
     (test.pool.new-bond pool account (create-module-guard "bond-wrapper"))
   )
 
-  (defun new-tranche (
+  (defun new-tranche:string (
     multi:string
     account:string
     amount:decimal
    )
-   (insert tranches multi account amount)
+   (with-read multis multi
+    { 'account:= account
+    , 'size:= size
+    , 'amount:=multi-amount
+    }
+    (let*
+      ( (date (chain-time))
+        (tranche (format "{}:{}" [account (format-time "%F" date)]))
+        (new-amount (+ amount multi-amount))
+      )
+      (insert tranches tranche {
+        'multi:multi,
+        'account:account,
+        'amount:amount
+      })
+    )
+   )
   )
 
   (defun new-multibond:string
@@ -53,7 +71,7 @@
       (create-module-guard "multibond"))
   )
 
-  (defun debit-tranche (account:string tranche:object{tranche})
+  (defun debit-tranche (account:string tranche:object{tranche-schema})
     (coin.transfer-create
       (at 'account tranche)
       account
@@ -83,7 +101,7 @@
     ( account:string           ;; multi account
       amount:decimal           ;; total amount to allocate
       size:decimal             ;; bond size
-      tranche:object{tranche}  ;; tranche
+      tranche:object{tranche-schema}  ;; tranche
     )
     (let ( (to (at 'account tranche))
     

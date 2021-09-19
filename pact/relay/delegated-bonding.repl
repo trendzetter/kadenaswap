@@ -12,9 +12,10 @@
 (define-keyset 'delegated-bonding-admin)
 (env-keys ['admin])
 
-
 (load "delegated-bonding.pact")
 
 
+(env-data { 'George: ["george"], 'Bill:["bill"]
+          , 'Emmy:["emmy"], 'Admin:["admin"], 'Pam:["pam"]})
 
-
+(delegated-bonding.new-tranche test.delegated-bonding.POOL "George" 500.0)
