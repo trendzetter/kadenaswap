@@ -19,6 +19,8 @@
     status:string
   )
 
+  (deftable reservations:{reservation-schema})
+
   (defschema slot-schema
     amount:decimal
     status:string
@@ -58,6 +60,23 @@
     )
     (insert slots slot {
       'amount:amount,
+      'status:'NEW
+    })
+  )
+
+  (defun new-reservation:string
+    (
+      account:string
+      guard:guard
+      slot:string
+      amount:decimal
+    )
+    (insert reservations (format "{}:{}" [account slot]) {
+      'account: account,
+      'guard: guard,
+      'slot: slot,
+      'time: (chain-time),
+      'amount: amount,
       'status:'NEW
     })
   )
@@ -145,6 +164,7 @@
 
 )
 (create-table slots)
+(create-table reservations)
 ;(if (read-msg 'upgrade)
 ;  ["upgrade"]
   ;[ 

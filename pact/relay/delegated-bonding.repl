@@ -19,5 +19,5 @@
           , 'Emmy:["emmy"], 'Admin:["admin"], 'Pam:["pam"]})
 
 (delegated-bonding.new-slot "October reservation slot" 5000.0)
-;(delegated-bonding.new-reservation test.delegated-bonding.POOL "George" 500.0)
+(delegated-bonding.new-reservation "George" (read-keyset 'George ) "October reservation slot" 500.0)
 ;(delegated-bonding.new-tranche test.delegated-bonding.POOL "George" 500.0)
