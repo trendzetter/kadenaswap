@@ -6,7 +6,26 @@
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
   )
 
-  (defconst POOL "bonding-tranches-pool")
+  (defconst POOL "delegated-bonding-pool")
+
+  (use util.guards)
+
+  (defschema reservation-schema
+    account:string
+    guard:guard
+    slot:string
+    time:time
+    amount:decimal
+    status:string
+  )
+
+  (defschema slot-schema
+    amount:decimal
+    status:string
+  )
+
+  (deftable slots:{slot-schema})
+
 
   (defschema tranche-schema
     multi:string       ;; Name of the multi to subscribe
@@ -14,13 +33,13 @@
     amount:decimal     ;; tranche amount      
   )
   
-  (defschema multi
+  (defschema multi-schema
    account:string               ;; KDA account
    size:decimal                 ;; bond size
    tranches:[object{tranche-schema}]   ;; tranches
   )
   
-  (deftable multis:{multi}) ;; stored by multi KDA account
+  (deftable multis:{multi-schema}) ;; stored by multi KDA account
 
   (deftable tranches:{tranche-schema}) 
 
@@ -30,6 +49,17 @@
     guard:guard      ;; bond administration guard
     )
     (test.pool.new-bond pool account (create-module-guard "bond-wrapper"))
+  )
+
+  (defun new-slot:string
+    (
+      slot:string
+      amount:decimal
+    )
+    (insert slots slot {
+      'amount:amount,
+      'status:'NEW
+    })
   )
 
   (defun new-tranche:string (
@@ -57,7 +87,7 @@
   )
 
   (defun new-multibond:string
-    ( multi:object{multi}        ;; multi tranches
+    ( multi:object{multi-schema}        ;; multi tranches
       account:string             ;; KDA account for multi/multi ID
     )
     ;; debit from each tranche
@@ -114,3 +144,10 @@
   )
 
 )
+(create-table slots)
+;(if (read-msg 'upgrade)
+;  ["upgrade"]
+  ;[ 
+  ;  (create-table slots)
+  ;]
+;)
