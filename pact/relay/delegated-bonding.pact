@@ -35,10 +35,6 @@
 
   (defun tranches-keys () (keys tranches))
 
-  (defun test (test:string arg:object{tranche})
-    (format "Test: {} {}" [test, (at 'amount arg)])
-  )
-
   (defun new-multibond:string
     ( multi:object{multi}               ;; multi tranches
       account:string                    ;; KDA account for multi/multi ID
@@ -46,8 +42,7 @@
     ;; debit from each tranche
     ;(map (at 'tranches multi) (debit-tranche account))
     (map (debit-tranche account) (at 'tranches multi) )
-    ;check balance of the pool
-    (coin.get-balance POOL)
+
     ;; store the multi
     (insert multis account multi)
     ;; allow the autonomous transfer to relay bank
@@ -93,37 +88,6 @@
       (coin.transfer account to tranche-amount))
   )
 
-  ; (defun new-tranche:string
-  ;  ( account:string
-  ;    guard:guard
-  ;    amount:decimal
-  ;  )
-  ;  @model [
-  ;    ;; TODO would like to make statements about transfer operation success
-  ;    (property (= (column-delta tranches 'amount) total-amount))
-  ;  ]
-  ;   (coin.transfer account POOL amount)
-  ;   (let*
-  ;     ( (date (chain-time))
-  ;       (tranche (format "{}:{}" [account (format-time "%F" date)]))
-  ;       (g (at 'guard (coin.details account)))
-  ;     )
-  ;     (insert tranches account {
-  ;       'account: account,
-  ;       'guard: guard,
-  ;       'amount: amount,
-  ;       'status: "REQUESTED"
-  ;     })
-  ;   )
-  ; )
-
-  ; (defun pool-guard:guard () (create-module-guard "pool-guard"))
-  ;
-  ; (defun initialize ()
-  ;   (with-capability (GOVERNANCE)
-  ;     (coin.create-account POOL (pool-guard))
-  ;   )
-  ; )
 )
 
 (create-table tranches)

@@ -11,35 +11,9 @@
      })
 
 (define-keyset 'delegated-bonding-admin)
-(env-keys ['admin, 'George, 'Bonk])
-
+(env-keys ['admin])
 
 (load "delegated-bonding.pact")
-
-;(delegated-bonding.initialize)
-
-
-
-; (env-data {
-;   "George": {
-;        "pred": "keys-all",
-;        "keys": [
-;            "fakeHash"
-;        ]},
-;   "Bonk": {
-;       "pred": "keys-all",
-;       "keys": [
-;         "fakeBonk"
-;       ]
-;    }
-; })
-
-; (test-capability (coin.COINBASE))
-; (env-data { 'George: ["george"], 'Bonk: ['bonk]})
-; (coin.coinbase "George" (read-keyset 'George) 150000.0)
-; (coin.coinbase "Bonk" (read-keyset 'Bonk) 150000.0)
-; (env-sigs [  {'key: "bonk",'caps: [(coin.TRANSFER "Bonk" "George" 2000.0)]}])
-; (coin.transfer "Bonk" "George" 2000.0)
 
  (env-data { 'George: ['george], 'Alice: ['alice], 'Admin: ['admin]})
 ;
@@ -48,17 +22,10 @@
  (coin.coinbase "Alice" (read-keyset 'Alice) 150000.0)
  (coin.coinbase "Admin" (read-keyset 'Admin) 100000.0)
 (env-sigs [  {'key: "george",'caps: [(coin.TRANSFER "George" "Alice" 2000.0)]}])
-;(coin.transfer "George" "Alice" 2000.0)
-;
- ;(coin.coinbase "shared-bond-1" (read-keyset 'Admin) 0.000000000001)
+
  (env-sigs
    [{'key: "admin",'caps: [(coin.TRANSFER "Admin" 'relay-bank 100000.0)]}])
 (test.pool.fund-reserve test.relay.POOL "Admin" 100000.0)
 ;
 (env-sigs [  {'key: "george",'caps: [(coin.TRANSFER "George" 'delegated-bonding-pool 2000.0)]}, {'key: "alice",'caps: [(coin.TRANSFER "Alice" 'delegated-bonding-pool 8000.0)]}])
 (delegated-bonding.new-multibond {'size: 10000.0, 'tranches: [{'account: "George", 'amount: 2000.0}, {'account: "Alice", 'amount: 8000.0}]} "delegated-bonding-pool")
-; ;(delegated-bonding.new-tranche "George" (read-keyset 'George) 500.0)
-; ;(delegated-bonding.allocate "shared-bond-1"  500.0 10000.0 (read-keyset 'George))
-; ;(delegated-bonding.new-tranche "George" (read-keyset 'George) 9000.0)
-;
-; (tranches-keys)
