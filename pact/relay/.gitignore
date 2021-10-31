@@ -1,1 +1,4 @@
-.pact-history
+.*history
+coverage
+pastebin.pact
+test.repl
