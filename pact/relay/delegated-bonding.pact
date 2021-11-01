@@ -6,14 +6,23 @@
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
   )
 
-  (defconst POOL "delegated-bonding-pool")
+  (defconst POOL 'delegated-bonding-pool)
   (defconst MAX_AMOUNT 50000)
 
   (use util.guards)
 
   (defschema tranche
-    account:string     ;; KDA account for the full bond
+    account:string     ;; account paying the tranche and receiving the rewards
+    slot:string        ;; KDA account for the full bond
     amount:decimal     ;; tranche amount
+    guard:guard        ;; keyset controlling the tranche (future rotation)
+    status:string      ;; current status of the tranche
+  )
+
+  (defschema slot
+    ;; key:  accountname for the autonomous controlled account
+    amount:decimal     ;; total and max amount
+    operator:guard     ;; keyset that will operator the app
   )
 
   (defschema multi
@@ -25,15 +34,37 @@
 
   (deftable tranches:{tranche})
 
+  (deftable slots:{slot})
+
   (defun wrap-new-bond:string
     ( pool:string      ;; Bond pool name
       account:string   ;; KDA account
       guard:guard      ;; bond administration guard
     )
-    (test.pool.new-bond pool account (create-module-guard "bond-wrapper"))
+    (test.pool.new-bond pool account (create-module-guard 'bond-wrapper))
   )
 
-  (defun tranches-keys () (keys tranches))
+  (defun get-all-slots ()
+  @doc " Return all slots. "
+  (map (read slots) (keys slots)))
+
+  (defun new-slot:string
+    ( account:string
+      amount:decimal
+      operator:guard    ;; the operator keyset who will rotate the key on the bond and run the app
+    )
+    (insert slots account { 'amount: amount, 'operator: operator })
+    (coin.create-account account (create-module-guard 'reservations))
+  )
+
+  (defun new-tranche:string
+    ( account:string    ;; account receiving the rewards
+      slot:string       ;; slot subscribibg to
+      amount:decimal
+      guard:guard
+    )
+    (insert tranches )
+  )
 
   (defun new-multibond:string
     ( multi:object{multi}               ;; multi tranches
@@ -90,5 +121,6 @@
 
 )
 
+(create-table slots)
 (create-table tranches)
 (create-table multis)
