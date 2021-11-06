@@ -36,6 +36,7 @@
     ;; key:  accountname for the autonomous controlled account
     amount:decimal     ;; total and max amount
     operator:guard     ;; keyset that will operator the app
+    fee:decimal        ;; percentage operator fee
   )
 
   (defschema multi
@@ -67,9 +68,10 @@
   (defun new-slot:string
     ( account:string
       amount:decimal
-      operator:guard    ;; the operator keyset who will rotate the key on the bond and run the app
+      operator:guard
+      fee:decimal
     )
-    (insert slots account { 'amount: amount, 'operator: operator })
+    (insert slots account { 'amount: amount, 'operator: operator, 'fee: fee })
     (coin.create-account account (create-module-guard 'reservations))
   )
 
@@ -91,12 +93,6 @@
     (at 'amount (read slots slot ['amount]))
     )
 
-  ; (defun test-amount:string
-  ;   (slot:string
-  ;     amount:decimal)
-  ;   (format "{}:{}" [(get-slot-amount slot) (+ amount (get-slot-total-amount slot))])
-  ;   )
-
   (defun new-tranche:string
     ( account:string
       slot:string
@@ -104,8 +100,7 @@
       guard:guard
     )
     @doc " Prepare a new tranche and transfer the funds to the shared account "
-    @model [ (property (valid-account-id account))
-             (property (>= (get-slot-amount slot) (+ amount (get-slot-total-amount slot))))]
+    @model [ (property (valid-account-id account))]
   (let ((total (get-slot-total-amount slot)))
     (with-read slots slot
       {'amount := maximum }
@@ -125,29 +120,36 @@
         (coin.transfer account slot amount)
         (write last-id-table "" {"last-id": id}))))))
 
+  (defun get-slot-tranches
+  (slot:string)
+  @doc " Return trache amounts for slot "
+  (select tranches [ 'account, 'slot, 'amount, 'guard, 'status ] (where 'slot (= slot))))
+
   (defun new-multibond:string
-    ( multi:object{multi}               ;; multi tranches
-      account:string                    ;; KDA account for multi/multi ID
-    )
+    ( slot:string )  ;; KDA account for multi/multi ID
     ;; debit from each tranche
-    (map (debit-tranche account) (at 'tranches multi) )
-
-    ;; store the multi
-    (insert multis account multi)
-    ;; allow the autonomous transfer to relay bank
-    (install-capability
-      (coin.TRANSFER account "relay-bank" (at 'size multi)))    ;; create the bond
-    (test.pool.new-bond "kda-relay-pool" account
-      (create-module-guard "multibond"))
+    ;(map (debit-tranche account) (at 'tranches multi) )
+    (let ((multi {
+      'size: (get-slot-amount slot),
+      'tranches: (get-slot-tranches slot)
+      }))
+      ;; store the multi
+      (insert multis slot multi)
+      ;; allow the autonomous transfer to relay bank
+      (install-capability
+        (coin.TRANSFER slot 'relay-bank (at 'size multi)))    ;; create the bond
+      (test.pool.new-bond "kda-relay-pool" slot
+        (create-module-guard slot))
+      )
   )
 
-  (defun debit-tranche (account:string tranche:object{tranche})
-    (coin.transfer-create
-      (at 'account tranche)
-      account
-      (create-module-guard "tranche")
-      (at 'amount tranche))
-  )
+  ; (defun debit-tranche (account:string tranche:object{tranche})
+  ;   (coin.transfer-create
+  ;     (at 'account tranche)
+  ;     account
+  ;     (create-module-guard "tranche")
+  ;     (at 'amount tranche))
+  ; )
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
