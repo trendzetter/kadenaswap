@@ -28,7 +28,15 @@
 (test.pool.fund-reserve test.relay.POOL "Admin" 100000.0)
 ;
 (delegated-bonding.new-slot 'multi1 10000.0 (read-keyset 'George))
+
+(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 2000.0)] }])
+(delegated-bonding.new-tranche "George" "multi1" 2000.0 (read-keyset "George"))
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 3000.0)] }])
+(delegated-bonding.new-tranche "Alice" "multi1" 3000.0 (read-keyset "Alice"))
+
 (delegated-bonding.get-all-slots)
+(delegated-bonding.get-all-tranches)
+(delegated-bonding.get-slot-tranche-amounts 'multi1)
 (coin.get-balance 'multi1)
 ;(env-sigs [  {'key: "george",'caps: [(coin.TRANSFER "George" 'delegated-bonding-pool 2000.0)]}, {'key: "alice",'caps: [(coin.TRANSFER "Alice" 'delegated-bonding-pool 8000.0)]}])
 ;(delegated-bonding.new-multibond {'size: 10000.0, 'tranches: [{'account: "George", 'amount: 2000.0}, {'account: "Alice", 'amount: 8000.0}]} "delegated-bonding-pool")

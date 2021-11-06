@@ -2,12 +2,25 @@
 
 (module delegated-bonding GOVERNANCE
 
+  @doc " slots for shared bonds"
+  @model
+  [ (defproperty valid-account-id (accountId:string)
+      (and
+        (>= (length accountId) 3)
+        (<= (length accountId) 256))) ]
+
   (defcap GOVERNANCE ()
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
   )
 
+
+  ;; TODO: remove
   (defconst POOL 'delegated-bonding-pool)
   (defconst MAX_AMOUNT 50000)
+
+  (defschema last-id-schema
+    last-id:integer)
+  (deftable last-id-table:{last-id-schema})
 
   (use util.guards)
 
@@ -48,6 +61,9 @@
   @doc " Return all slots. "
   (map (read slots) (keys slots)))
 
+  (defun get-all-tranches ()
+  (map (read tranches) (keys tranches)))
+
   (defun new-slot:string
     ( account:string
       amount:decimal
@@ -57,13 +73,38 @@
     (coin.create-account account (create-module-guard 'reservations))
   )
 
+  (defun get-slot-tranche-amounts
+  (slot:string)
+  @doc " Return trache amounts for slot "
+  (select tranches [ 'amount ] (where 'slot (= slot))))
+
   (defun new-tranche:string
-    ( account:string    ;; account receiving the rewards
-      slot:string       ;; slot subscribibg to
+    ( account:string
+      slot:string
       amount:decimal
       guard:guard
     )
-    (insert tranches )
+    @doc " Prepare a new tranche and transfer the funds to the shared account "
+    @model [ (property (valid-account-id account)) ]
+    ; (with-read slots slot
+    ;   { 'amount := max }
+    ; )
+    (with-default-read last-id-table ""
+      { 'last-id : 0}
+      { 'last-id := last }
+      ;Increment last-id
+      (let ((id: integer ( + last 1 )))
+      (write last-id-table "" {"last-id": id})
+      (insert tranches (format "{}" [id]) {
+        'account: account,
+        'slot: slot,
+        'amount: amount,
+        'guard: guard,
+        'status: "NEW"
+        })
+      )
+      (coin.transfer account slot amount)
+    )
   )
 
   (defun new-multibond:string
@@ -118,9 +159,9 @@
         (coin.TRANSFER account to tranche-amount))
       (coin.transfer account to tranche-amount))
   )
-
 )
 
+(create-table last-id-table)
 (create-table slots)
 (create-table tranches)
 (create-table multis)
