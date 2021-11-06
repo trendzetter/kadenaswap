@@ -59,7 +59,7 @@
 
   (defun get-all-slots ()
   @doc " Return all slots. "
-  (map (read slots) (keys slots)))
+  (format "{}:{}" [(map (read slots) (keys slots)) (keys slots)] ))
 
   (defun get-all-tranches ()
   (map (read tranches) (keys tranches)))
@@ -78,6 +78,25 @@
   @doc " Return trache amounts for slot "
   (select tranches [ 'amount ] (where 'slot (= slot))))
 
+  (defun get-slot-total-amount:decimal
+  (slot:string)
+  @doc " Return to total amount of tranches "
+    ;(fold (+) 0.0 (map (at 'amount) [{"amount": 2000.0} {"amount": 3000.0}] ) )
+    (fold (+) 0.0 (map (at 'amount) (get-slot-tranche-amounts slot) ) )
+  )
+
+  (defun get-slot-amount:decimal
+    (slot:string)
+    @doc " Return the slot maximum amount "
+    (at 'amount (read slots slot ['amount]))
+    )
+
+  ; (defun test-amount:string
+  ;   (slot:string
+  ;     amount:decimal)
+  ;   (format "{}:{}" [(get-slot-amount slot) (+ amount (get-slot-total-amount slot))])
+  ;   )
+
   (defun new-tranche:string
     ( account:string
       slot:string
@@ -85,34 +104,32 @@
       guard:guard
     )
     @doc " Prepare a new tranche and transfer the funds to the shared account "
-    @model [ (property (valid-account-id account)) ]
-    ; (with-read slots slot
-    ;   { 'amount := max }
-    ; )
-    (with-default-read last-id-table ""
-      { 'last-id : 0}
-      { 'last-id := last }
-      ;Increment last-id
+    @model [ (property (valid-account-id account))
+             (property (>= (get-slot-amount slot) (+ amount (get-slot-total-amount slot))))]
+  (let ((total (get-slot-total-amount slot)))
+    (with-read slots slot
+      {'amount := maximum }
+      (enforce (>= maximum (+ amount total))
+       "Tranche cannot be bigger than the remaining amount for the slot" )
+      (with-default-read last-id-table ""
+        { 'last-id : 0}
+        { 'last-id := last }
       (let ((id: integer ( + last 1 )))
-      (write last-id-table "" {"last-id": id})
-      (insert tranches (format "{}" [id]) {
-        'account: account,
-        'slot: slot,
-        'amount: amount,
-        'guard: guard,
-        'status: "NEW"
-        })
-      )
-      (coin.transfer account slot amount)
-    )
-  )
+        (insert tranches (format "{}" [id]) {
+            'account: account,
+            'slot: slot,
+            'amount: amount,
+            'guard: guard,
+            'status: "NEW"
+            })
+        (coin.transfer account slot amount)
+        (write last-id-table "" {"last-id": id}))))))
 
   (defun new-multibond:string
     ( multi:object{multi}               ;; multi tranches
       account:string                    ;; KDA account for multi/multi ID
     )
     ;; debit from each tranche
-    ;(map (at 'tranches multi) (debit-tranche account))
     (map (debit-tranche account) (at 'tranches multi) )
 
     ;; store the multi
