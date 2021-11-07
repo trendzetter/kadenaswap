@@ -28,7 +28,7 @@
     account:string     ;; account paying the tranche and receiving the rewards
     slot:string        ;; KDA account for the full bond
     amount:decimal     ;; tranche amount
-    guard:guard        ;; keyset controlling the tranche (future rotation)
+    guard:guard        ;; keyset operator for running app
     status:string      ;; current status of the tranche
   )
 
@@ -37,6 +37,7 @@
     amount:decimal     ;; total and max amount
     operator:guard     ;; keyset that will operator the app
     fee:decimal        ;; percentage operator fee
+    bondId:string        ;; Id of the bond
   )
 
   (defschema multi
@@ -58,6 +59,7 @@
     (test.pool.new-bond pool account (create-module-guard 'bond-wrapper))
   )
 
+
   (defun get-all-slots ()
   @doc " Return all slots. "
   (format "{}:{}" [(map (read slots) (keys slots)) (keys slots)] ))
@@ -71,7 +73,7 @@
       operator:guard
       fee:decimal
     )
-    (insert slots account { 'amount: amount, 'operator: operator, 'fee: fee })
+    (insert slots account { 'amount: amount, 'operator: operator, 'fee: fee, 'bondId: "" })
     (coin.create-account account (create-module-guard 'reservations))
   )
 
@@ -83,7 +85,6 @@
   (defun get-slot-total-amount:decimal
   (slot:string)
   @doc " Return to total amount of tranches "
-    ;(fold (+) 0.0 (map (at 'amount) [{"amount": 2000.0} {"amount": 3000.0}] ) )
     (fold (+) 0.0 (map (at 'amount) (get-slot-tranche-amounts slot) ) )
   )
 
@@ -138,25 +139,24 @@
       ;; allow the autonomous transfer to relay bank
       (install-capability
         (coin.TRANSFER slot 'relay-bank (at 'size multi)))    ;; create the bond
-      (test.pool.new-bond "kda-relay-pool" slot
-        (create-module-guard slot))
-      )
-  )
-
-  ; (defun debit-tranche (account:string tranche:object{tranche})
-  ;   (coin.transfer-create
-  ;     (at 'account tranche)
-  ;     account
-  ;     (create-module-guard "tranche")
-  ;     (at 'amount tranche))
-  ; )
+      (update slots slot {
+        'bondId: (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))
+        }))
+      (with-read slots slot
+        { 'operator := operator,
+          'bondId := bondId }
+        (install-capability (test.pool.ROTATE bondId))
+        (test.pool.rotate bondId operator)))
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
     (let ( (old-balance (coin.get-balance account))
-           (multi (read multis account)) )
+           (multi (read multis account))
+           (slot (read slots account)))
       ;; renew, will credit account
-      (test.pool.renew account)
+
+      (install-capability (test.pool.BONDER (at 'bondId slot)))
+      (test.pool.renew (at 'bondId slot))
       ;; compute new amount
       (let ( (amount (- (coin.get-balance account) old-balance)) )
         ;; allocate
@@ -165,19 +165,37 @@
           (at 'tranches multi))))
   )
 
+;testing
+
+(defun test-test:string
+  ( slot:string )
+  (with-read slots slot
+    { 'operator := operator,
+      'bondId := bondId }
+  (format "{} {}" [operator bondId])))
+
   (defun allocate
-    ( account:string           ;; multi account
-      amount:decimal           ;; total amount to allocate
-      size:decimal             ;; bond size
-      tranche:object{tranche}  ;; tranche
-    )
-    (let ( (to (at 'account tranche))
-           ;; compute tranche amount
-           (tranche-amount (* amount (/ (at 'amount tranche) size))) )
-      (install-capability
-        (coin.TRANSFER account to tranche-amount))
-      (coin.transfer account to tranche-amount))
+      ( account:string           ;; multi account
+        amount:decimal           ;; total amount to allocate
+        size:decimal             ;; bond size
+        tranche:object{tranche}  ;; tranche
+      )
+      (format "{} {} {} {}" [account amount size tranche])
   )
+
+  ; (defun allocate
+  ;   ( account:string           ;; multi account
+  ;     amount:decimal           ;; total amount to allocate
+  ;     size:decimal             ;; bond size
+  ;     tranche:object{tranche}  ;; tranche
+  ;   )
+  ;   (let ( (to (at 'account tranche))
+  ;          ;; compute tranche amount
+  ;          (tranche-amount (* amount (/ (at 'amount tranche) size))) )
+  ;     (install-capability
+  ;       (coin.TRANSFER account to tranche-amount))
+  ;     (coin.transfer account to tranche-amount))
+  ; )
 )
 
 (create-table last-id-table)
