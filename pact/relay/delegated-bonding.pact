@@ -81,7 +81,7 @@
   (slot:string)
   @doc " Return trache amounts for slot "
   (select tranches [ 'amount ] (where 'slot (= slot))))
-
+; todo: get-remaining-amount
   (defun get-slot-total-amount:decimal
   (slot:string)
   @doc " Return to total amount of tranches "
