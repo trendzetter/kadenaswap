@@ -23,7 +23,7 @@
    [{'key: "admin",'caps: [(coin.TRANSFER "Admin" 'relay-bank 100000.0)]}])
 (test.pool.fund-reserve test.relay.POOL "Admin" 100000.0)
  (commit-tx)
- 
+
 (begin-tx)
 (define-keyset 'delegated-bonding-admin)
 (env-keys ['admin])
@@ -33,12 +33,19 @@
 
 (begin-tx)
 ; create new slot
-(test.delegated-bonding.new-slot 'multi1 10000.0 (read-keyset 'George) 2.0)
-(test.delegated-bonding.new-slot 'multi2 10000.0 (read-keyset 'George) 3.0)
+(expect "new-slot: success multi1"
+  "Write succeeded"
+  (test.delegated-bonding.new-slot 'multi1 10000.0 (read-keyset 'George) 2.0))
+
+(expect "new-slot: success multi2"
+    "Write succeeded"
+  (test.delegated-bonding.new-slot 'multi2 10000.0 (read-keyset 'George) 3.0))
 ;(delegated-bonding.get-slot-amount 'multi1)
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
-(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice"))
+(expect "new-tranche: success Alice"
+    "Write succeeded"
+(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 3000.0)] }])
 (expect-failure "Tranche cannot be bigger than the remaining amount for the slot"
@@ -59,84 +66,68 @@
 (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
 (commit-tx)
 
+(begin-tx)
 (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
 (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
-
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
+(test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
+(commit-tx)
 ;(delegated-bonding.get-all-slots)
 ;(delegated-bonding.get-all-tranches)
 ;(delegated-bonding.get-slot-tranche-amounts 'multi1)
 ;(delegated-bonding.get-slot-total-amount 'multi1)
-(coin.get-balance 'multi1)
-
+(begin-tx)
 (test.delegated-bonding.new-multibond 'multi1)
+(commit-tx)
+(begin-tx)
+(env-chain-data { 'block-time: (parse-time "%F" "2021-02-17")})
+(test.delegated-bonding.new-multibond 'multi2)
+(commit-tx)
 
-(coin.get-balance 'multi1)
+
 
 (test.pool.bond-keys)
 
+(begin-tx)
 
 (map (remove 'module-hash) (env-events true))
+
  (env-sigs
-   [ {'key: "george",'caps: [(test.relay.BONDER "multi1:2021-02-15")]}
+   [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-02-17")]}
    ])
+ (commit-tx)
  (env-hash (hash 'envhash2))
  (env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
  (env-data {'header: { 'hash: "h2", 'number: 1, 'receipts-root: "r2" }})
- (expect "multi1 1 propose"
+ (expect "multi2 1 propose"
    "Write succeeded"
    (test.relay.propose
      (read-msg 'header)
-     "multi1:2021-02-15"))
+     "multi2:2021-02-17"))
  (expect "propose events"
-       [{"name": "test.relay.PROPOSE","params": [1 "h2" "multi1:2021-02-15" ["Bob:2021-01-01" "Bob:2021-01-02" "Pam:2021-01-01" "Pam:2021-01-03" "Pam:2021-01-07"]]}]
+      [{"name": "test.relay.PROPOSE","params": [1 "h2" "multi2:2021-02-17" ["Bob:2021-01-01" "Pam:2021-01-01" "Pam:2021-01-02" "Pam:2021-01-03" "Pam:2021-01-07"]]}]
    (map (remove 'module-hash) (env-events true)))
     (expect-failure "not validated 0"
     "Not accepted"
    (test.relay.validate (read-msg 'header)))
 
- ;; endorser simple failures
-; (expect-failure "no sig"
-;   "Keyset failure"
-;   (test.relay.endorse (read-msg 'header) "Bob:2021-01-01"))
-; (env-sigs
-;   [ {'key: "carol",'caps: [(test.relay.BONDER "Carol:2021-01-03")]}
-;   ])
-; (expect-failure "wrong sig"
-;   "Keyset failure"
-;   (test.relay.endorse (read-msg 'header) "Bob:2021-01-01"))
-; (expect-failure "not endorser"
-;   "Invalid endorser"
-;   (test.relay.endorse (read-msg 'header) "Carol:2021-01-03"))
-; (env-sigs
-;   [ {'key: "bob",'caps: [(test.relay.BONDER "Bob:2021-01-01")]}
-;   ])
-; (expect-failure "wrong height"
-;   "row not found"
-;   (test.relay.endorse (+ {'number: 2} (read-msg 'header)) "Bob:2021-01-01"))
-; (expect-failure "wrong hash"
-;   "not proposed at height"
-;   (test.relay.endorse (+ {'hash: "skdfjh"} (read-msg 'header)) "Bob:2021-01-01"))
-; (expect-failure "wrong data"
-;   "Header mismatch"
-;   (test.relay.endorse (+ {'receipts-root: "skdfjh"} (read-msg 'header)) "Bob:2021-01-01"))
-;
-; ;; endorser success
-;
-; (env-sigs
-;   [ {'key: "bob",'caps: [(test.relay.BONDER "Bob:2021-01-01")]}
-;   ])
-; (expect "endorse Bob 1"
-;   "Write succeeded"
-;   (test.relay.endorse (read-msg 'header) "Bob:2021-01-01"))
-; (expect "endorse events"
-;    [ {"name": "test.relay.ENDORSE","params": ["h1" "Bob:2021-01-01" false]}
-;      {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "Bob:2021-01-01" 1]}
-;    ]
-;   (map (remove 'module-hash) (env-events true)))
-; (expect "activity 1"
-;   1
-;   (at 'activity (test.pool.get-bond "Bob:2021-01-01")))
-; (expect-failure "not validated 1"
+ ;; endorser success
+
+ (env-sigs
+   [ {'key: "bob",'caps: [(test.relay.BONDER "Bob:2021-01-01")]}
+   ])
+ ; (expect "endorse Bob 1"
+ ;   "Write succeeded"
+ ;   (test.relay.endorse (read-msg 'header) "Bob:2021-01-01"))
+ ;  (expect "endorse events"
+ ;    [ {"name": "test.relay.ENDORSE","params": ["h1" "Bob:2021-01-01" false]}
+ ;      {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "Bob:2021-01-01" 1]}
+ ;    ]
+ ;    (map (remove 'module-hash) (env-events true)))
+ ;(expect "activity 1"
+;    1
+;    (at 'activity (test.pool.get-bond "Bob:2021-01-01")))
+ ;(expect-failure "not validated 1"
 ;   "Not accepted"
 ;   (test.relay.validate (read-msg 'header)))
 ;

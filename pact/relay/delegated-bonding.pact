@@ -13,10 +13,14 @@
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
   )
 
+  (defcap RESERVE
+   ( account:string
+     amount:decimal)
+   @doc "Reserve event for tranche reservation"
+   @event true
+  )
 
-  ;; TODO: remove
-  (defconst POOL 'delegated-bonding-pool)
-  (defconst MAX_AMOUNT 50000)
+  (defconst POOL 'kda-relay-pool)
 
   (defschema last-id-schema
     last-id:integer)
@@ -102,6 +106,7 @@
     )
     @doc " Prepare a new tranche and transfer the funds to the shared account "
     @model [ (property (valid-account-id account))]
+  (with-capability (RESERVE account amount) 1
   (let ((total (get-slot-total-amount slot)))
     (with-read slots slot
       {'amount := maximum }
@@ -119,7 +124,7 @@
             'status: "NEW"
             })
         (coin.transfer account slot amount)
-        (write last-id-table "" {"last-id": id}))))))
+        (write last-id-table "" {"last-id": id})))))))
 
   (defun get-slot-tranches
   (slot:string)
@@ -138,15 +143,19 @@
       (insert multis slot multi)
       ;; allow the autonomous transfer to relay bank
       (install-capability
-        (coin.TRANSFER slot 'relay-bank (at 'size multi)))    ;; create the bond
+        (coin.TRANSFER slot 'relay-bank (at 'size multi)))
+
+        ;; create the bond
       (update slots slot {
         'bondId: (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))
         }))
+
       (with-read slots slot
         { 'operator := operator,
           'bondId := bondId }
         (install-capability (test.pool.ROTATE bondId))
-        (test.pool.rotate bondId operator)))
+        (test.pool.rotate bondId operator)
+        (format "{}" [bondId])))
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
