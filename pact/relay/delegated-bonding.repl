@@ -34,17 +34,17 @@
 (begin-tx)
 ; create new slot
 (expect "new-slot: success multi1"
-  "Write succeeded"
+  "Slot multi1 added"
   (test.delegated-bonding.new-slot 'multi1 10000.0 (read-keyset 'George) 2.0))
 
 (expect "new-slot: success multi2"
-    "Write succeeded"
+    "Slot multi2 added"
   (test.delegated-bonding.new-slot 'multi2 10000.0 (read-keyset 'George) 3.0))
 ;(delegated-bonding.get-slot-amount 'multi1)
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Write succeeded"
+    "Tranche 1 reserved"
 (test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 3000.0)] }])

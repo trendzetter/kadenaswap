@@ -79,6 +79,7 @@
     )
     (insert slots account { 'amount: amount, 'operator: operator, 'fee: fee, 'bondId: "" })
     (coin.create-account account (create-module-guard 'reservations))
+    (format "Slot {} added" [account])
   )
 
   (defun get-slot-tranche-amounts
@@ -124,7 +125,8 @@
             'status: "NEW"
             })
         (coin.transfer account slot amount)
-        (write last-id-table "" {"last-id": id})))))))
+        (write last-id-table "" {"last-id": id})
+        (format "Tranche {} reserved" [id])))))))
 
   (defun get-slot-tranches
   (slot:string)
