@@ -14,14 +14,14 @@
 
  (begin-tx)
  (test-capability (coin.COINBASE))
- (coin.coinbase "George" (read-keyset 'George) 15000.0)
- (coin.coinbase "Alice" (read-keyset 'Alice) 15000.0)
- (coin.coinbase "Pam" (read-keyset 'Pam) 15000.0)
- (coin.coinbase "Admin" (read-keyset 'Admin) 100000.0)
+ (coin.coinbase "George" (read-keyset 'George) 150000.0)
+ (coin.coinbase "Alice" (read-keyset 'Alice) 150000.0)
+ (coin.coinbase "Pam" (read-keyset 'Pam) 150000.0)
+ (coin.coinbase "Admin" (read-keyset 'Admin) 200000.0)
 
  (env-sigs
-   [{'key: "admin",'caps: [(coin.TRANSFER "Admin" 'relay-bank 100000.0)]}])
-(test.pool.fund-reserve test.relay.POOL "Admin" 100000.0)
+   [{'key: "admin",'caps: [(coin.TRANSFER "Admin" 'relay-bank 200000.0)]}])
+(test.pool.fund-reserve test.relay.POOL "Admin" 200000.0)
  (commit-tx)
 
 (begin-tx)
@@ -30,6 +30,16 @@
 ; Load the module into the namespace test
 (load "delegated-bonding.pact")
 (commit-tx)
+
+(env-chain-data { 'block-time: (parse-time "%F" "2021-03-17")})
+(begin-tx)
+(env-sigs
+  [ {'key: "pam",'caps: [(test.pool.BONDER "Pam:2021-01-01")]}
+  ])
+(test.pool.unbond "Pam:2021-01-01")
+(test.pool.get-pool test.relay.POOL)
+(commit-tx)
+
 
 (begin-tx)
 ; create new slot
@@ -40,7 +50,29 @@
 (expect "new-slot: success multi2"
     "Slot multi2 added"
   (test.delegated-bonding.new-slot 'multi2 10000.0 (read-keyset 'George) 3.0))
+
+; create new slot
+(expect "new-slot: success multi3"
+  "Slot multi3 added"
+  (test.delegated-bonding.new-slot 'multi3 10000.0 (read-keyset 'George) 2.0))
+
+; create new slot
+(expect "new-slot: success multi4"
+  "Slot multi4 added"
+  (test.delegated-bonding.new-slot 'multi4 10000.0 (read-keyset 'George) 2.0))
+
+; create new slot
+(expect "new-slot: success multi5"
+  "Slot multi5 added"
+  (test.delegated-bonding.new-slot 'multi5 10000.0 (read-keyset 'George) 2.0))
+
+; create new slot
+(expect "new-slot: success multi6"
+  "Slot multi6 added"
+  (test.delegated-bonding.new-slot 'multi6 10000.0 (read-keyset 'George) 2.0))
 ;(delegated-bonding.get-slot-amount 'multi1)
+
+;; Multi1
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
 (expect "new-tranche: success Alice"
@@ -53,7 +85,17 @@
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 2000.0)] }])
 (test.delegated-bonding.new-tranche "George" "multi1" 2000.0 (read-keyset "George"))
+(commit-tx)
 
+(begin-tx)
+(expect "Multi1 activated"
+  "multi1:2021-03-17"
+(test.delegated-bonding.new-multibond 'multi1) )
+(commit-tx)
+
+
+;; Multi2
+(begin-tx)
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
 (test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
 
@@ -72,26 +114,75 @@
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
 (test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
 (commit-tx)
+
+(begin-tx)
+(env-chain-data { 'block-time: (parse-time "%F" "2021-03-18")})
+(expect "Multi2 activated"
+  "multi2:2021-03-18"
+(test.delegated-bonding.new-multibond 'multi2) )
+(commit-tx)
+
+
+(begin-tx)
+;; Multi3
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi3" 8000.0)] }])
+(expect "new-tranche: success Alice"
+    "Tranche 8 reserved"
+(test.delegated-bonding.new-tranche "Alice" "multi3" 8000.0 (read-keyset "Alice")))
+
+(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi3" 2000.0)] }])
+(expect "new-tranche: success George"
+    "Tranche 9 reserved"
+(test.delegated-bonding.new-tranche "George" "multi3" 2000.0 (read-keyset "George")))
+(commit-tx)
+
+(begin-tx)
+(expect "Multi3 activated"
+  "multi3:2021-03-18"
+(test.delegated-bonding.new-multibond 'multi3) )
+(commit-tx)
+
+;; Multi4
+(begin-tx)
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi4" 8000.0)] }])
+(expect "new-tranche: success Alice"
+    "Tranche 10 reserved"
+(test.delegated-bonding.new-tranche "Alice" "multi4" 8000.0 (read-keyset "Alice")))
+
+(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi4" 2000.0)] }])
+(expect "new-tranche: success George"
+    "Tranche 11 reserved"
+(test.delegated-bonding.new-tranche "George" "multi4" 2000.0 (read-keyset "George")))
+
+;; Multi5
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi5" 8000.0)] }])
+(expect "new-tranche: success Alice"
+    "Tranche 12 reserved"
+(test.delegated-bonding.new-tranche "Alice" "multi5" 8000.0 (read-keyset "Alice")))
+
+(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi5" 2000.0)] }])
+(expect "new-tranche: success George"
+    "Tranche 13 reserved"
+(test.delegated-bonding.new-tranche "George" "multi5" 2000.0 (read-keyset "George")))
+
+
+;; Multi6
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi6" 8000.0)] }])
+(expect "new-tranche: success Alice"
+    "Tranche 14 reserved"
+(test.delegated-bonding.new-tranche "Alice" "multi6" 8000.0 (read-keyset "Alice")))
+
+(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi6" 2000.0)] }])
+(expect "new-tranche: success George"
+    "Tranche 15 reserved"
+(test.delegated-bonding.new-tranche "George" "multi6" 2000.0 (read-keyset "George")))
+(commit-tx)
+
 ;(delegated-bonding.get-all-slots)
 ;(delegated-bonding.get-all-tranches)
 ;(delegated-bonding.get-slot-tranche-amounts 'multi1)
 ;(delegated-bonding.get-slot-total-amount 'multi1)
-(begin-tx)
-(env-chain-data { 'block-time: (parse-time "%F" "2021-03-17")})
-(test.delegated-bonding.new-multibond 'multi1)
-(commit-tx)
-(begin-tx)
-(env-chain-data { 'block-time: (parse-time "%F" "2021-03-18")})
-(test.delegated-bonding.new-multibond 'multi2)
-(commit-tx)
 
-(begin-tx)
-(env-sigs
-  [ {'key: "pam",'caps: [(test.pool.BONDER "Pam:2021-01-01")]}
-  ])
-(test.pool.unbond "Pam:2021-01-01")
-(commit-tx)
-(test.pool.get-pool test.relay.POOL)
 
 
 (begin-tx)
