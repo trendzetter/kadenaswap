@@ -161,13 +161,15 @@
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
-    (let ( (old-balance (coin.get-balance account))
+    (let* ( (old-balance (coin.get-balance account))
            (multi (read multis account))
-           (slot (read slots account)))
+           (slot (read slots account))
+           (bondId (at 'bondId slot)))
       ;; renew, will credit account
-
-      (install-capability (test.pool.BONDER (at 'bondId slot)))
+      (test.pool.rotate bondId (create-module-guard 'multibond))
+      (install-capability (test.pool.BONDER bondId))
       (test.pool.renew (at 'bondId slot))
+      (test.pool.rotate bondId (at 'operator slot))
       ;; compute new amount
       (let ( (amount (- (coin.get-balance account) old-balance)) )
         ;; allocate
