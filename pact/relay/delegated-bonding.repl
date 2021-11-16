@@ -227,7 +227,7 @@
    (test.relay.validate (read-msg 'header)))
 (commit-tx)
 
-
+ (begin-tx)
  ;; endorser success
   (env-sigs
     [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")]}
@@ -250,7 +250,7 @@
   (expect-failure "dupe failure"
     "Duplicate endorse"
     (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
-
+ (commit-tx)
 
  (env-sigs
    [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}
@@ -281,32 +281,48 @@
       {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi4:2021-03-18" 1]}
     ]
    (map (remove 'module-hash) (env-events true)))
-; (expect "activity 3"
-;   1
-;   (at 'activity (test.pool.get-bond "Alice:2021-01-02")))
-; (expect "validated 3" true
-;   (test.relay.validate (read-msg 'header)))
-; (env-sigs
-;   [ {'key: "bob",'caps: [(test.relay.BONDER "Bob:2021-01-03")]}
-;   ])
-; (expect-failure "already accepted"
-;   "Block not proposed at height"
-;   (test.relay.endorse (read-msg 'header) "Bob:2021-01-03"))
+ (expect "activity 3"
+   1
+   (at 'activity (test.pool.get-bond "multi4:2021-03-18")))
+
+ (expect "validated 3" true
+   (test.relay.validate (read-msg 'header)))
+
+;;; next header?
+   ; (env-sigs
+   ;   [ {'key: "george",'caps: [(test.relay.BONDER "multi5:2021-03-18")]}
+   ;   ])
+   ; (expect "endorse multi5:2021-03-18"
+   ;   "Write succeeded"
+   ;   (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
 
 
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-20")})
 (coin.get-balance 'George)
 (coin.get-balance 'Alice)
 
-; ERROR TRANSFER AMOUNT MUST BE POSITIVE WHEN NO ACTIVITY (transfer "relay-bank" "multi1" 0.0)
-(env-chain-data { 'block-time: (parse-time "%F" "2021-04-18")})
+(env-sigs
+  [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")
+                            (test.pool.ROTATE "multi2:2021-03-18")]}
+  ])
+  (expect-failure "renew Alice 2: too soon"
+    "Bond still active"
+    (test.delegated-bonding.renew-multibond 'multi2))
+
+(env-chain-data { 'block-time: (parse-time "%F" "2021-05-05")})
 (begin-tx)
 (env-sigs
-  [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")
-                            (test.pool.ROTATE "multi3:2021-03-18")]}
+  [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")
+                            (test.pool.ROTATE "multi2:2021-03-18")]}
   ])
-(test.delegated-bonding.renew-multibond 'multi3)
+
+(test.delegated-bonding.renew-multibond 'multi2)
+
+;; Todo rotate to operator
+; (test.delegated-bonding.rotate 'multi2)
+
 (commit-tx)
+(coin.get-balance 'multi2)
 (coin.get-balance 'George)
 (coin.get-balance 'Alice)
 

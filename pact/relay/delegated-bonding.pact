@@ -169,7 +169,6 @@
       (test.pool.rotate bondId (create-module-guard 'multibond))
       (install-capability (test.pool.BONDER bondId))
       (test.pool.renew (at 'bondId slot))
-      (test.pool.rotate bondId (at 'operator slot))
       ;; compute new amount
       (let ( (amount (- (coin.get-balance account) old-balance)) )
         ;; allocate
@@ -178,14 +177,9 @@
           (at 'tranches multi))))
   )
 
-;testing
-
-(defun test-test:string
-  ( slot:string )
-  (with-read slots slot
-    { 'operator := operator,
-      'bondId := bondId }
-  (format "{} {}" [operator bondId])))
+  (defun rotate
+    ( slot:string)
+    (test.pool.rotate ))
 
   (defun allocate
       ( account:string           ;; multi account
