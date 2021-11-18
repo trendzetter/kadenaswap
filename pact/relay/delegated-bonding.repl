@@ -300,6 +300,7 @@
  (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-20")})
 (coin.get-balance 'George)
+(coin.get-balance 'Pam)
 (coin.get-balance 'Alice)
 
 (env-sigs
@@ -334,12 +335,14 @@
  {"name": "coin.TRANSFER","params": ["multi2" "Alice" 2.0]}
  {"name": "coin.TRANSFER","params": ["multi2" "Pam" 3.0]}]
    (map (remove 'module-hash) (env-events true)))
+
 ;; Todo rotate to operator
 ; (test.delegated-bonding.rotate 'multi2)
 
 (commit-tx)
 (coin.get-balance 'multi2)
 (coin.get-balance 'George)
+(coin.get-balance 'Pam)
 (coin.get-balance 'Alice)
 
 ;(coin.get-balance 'Alice)
