@@ -113,10 +113,6 @@
       {'amount := maximum }
       (enforce (>= maximum (+ amount total))
        "Tranche cannot be bigger than the remaining amount for the slot" )
-      ; (with-default-read last-id-table ""
-      ;   { 'last-id : 0}
-      ;   { 'last-id := last }
-      ; (let ((id: integer ( + last 1 )))
       (let ((id: string (format "{}:{}" [slot account])))
         (insert tranches id {
             'account: account,
@@ -126,7 +122,6 @@
             'status: "NEW"
             })
         (coin.transfer account slot amount)
-        ; (write last-id-table "" {"last-id": id})
         (format "{}" [id]))))))
 
   (defun get-slot-tranches
@@ -136,8 +131,6 @@
 
   (defun new-multibond:string
     ( slot:string )  ;; KDA account for multi/multi ID
-    ;; debit from each tranche
-    ;(map (debit-tranche account) (at 'tranches multi) )
     (let ((multi {
       'size: (get-slot-amount slot),
       'tranches: (get-slot-tranches slot)
@@ -149,16 +142,13 @@
         (coin.TRANSFER slot 'relay-bank (at 'size multi)))
 
         ;; create the bond
+        (let ((bondId: string (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))))
       (update slots slot {
-        'bondId: (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))
-        }))
+        'bondId: bondId
+        })
 
-      (with-read slots slot
-        { 'operator := operator,
-          'bondId := bondId }
-        (install-capability (test.pool.ROTATE bondId))
-        (test.pool.rotate bondId operator)
-        (format "{}" [bondId])))
+        (rotate slot)
+        (format "{}" [bondId]))))
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
@@ -174,21 +164,20 @@
       (let ( (amount (- (coin.get-balance account) old-balance)) )
         ;; allocate
         (map
-          (allocate account amount (at 'size multi)) (at 'tranches multi)))))
+          (allocate account amount (at 'size multi)) (at 'tranches multi)))
+      ;; ISSUe: capability already fired
+      ; (rotate account)
+      ))
+
 
   (defun rotate
     ( slot:string)
-    (test.pool.rotate ))
+    (with-read slots slot
+      { 'operator := operator,
+        'bondId := bondId }
+      (install-capability (test.pool.ROTATE bondId))
+      (test.pool.rotate bondId operator)))
 
-  ; (defun allocate
-  ;     ( account:string           ;; multi account
-  ;       amount:decimal           ;; total amount to allocate
-  ;       size:decimal             ;; bond size
-  ;       tranche:object{tranche}  ;; tranche
-  ;     )
-  ;     (format "{} {} {} {}" [account amount size tranche])
-  ; )
-  ;
   (defun allocate
     ( account:string           ;; multi account
       amount:decimal           ;; total amount to allocate
