@@ -113,11 +113,12 @@
       {'amount := maximum }
       (enforce (>= maximum (+ amount total))
        "Tranche cannot be bigger than the remaining amount for the slot" )
-      (with-default-read last-id-table ""
-        { 'last-id : 0}
-        { 'last-id := last }
-      (let ((id: integer ( + last 1 )))
-        (insert tranches (format "{}" [id]) {
+      ; (with-default-read last-id-table ""
+      ;   { 'last-id : 0}
+      ;   { 'last-id := last }
+      ; (let ((id: integer ( + last 1 )))
+      (let ((id: string (format "{}:{}" [slot account])))
+        (insert tranches id {
             'account: account,
             'slot: slot,
             'amount: amount,
@@ -125,8 +126,8 @@
             'status: "NEW"
             })
         (coin.transfer account slot amount)
-        (write last-id-table "" {"last-id": id})
-        (format "Tranche {} reserved" [id])))))))
+        ; (write last-id-table "" {"last-id": id})
+        (format "{}" [id]))))))
 
   (defun get-slot-tranches
   (slot:string)
@@ -173,36 +174,35 @@
       (let ( (amount (- (coin.get-balance account) old-balance)) )
         ;; allocate
         (map
-          (allocate account amount (at 'size multi))
-          (at 'tranches multi))))
-  )
+          (allocate account amount (at 'size multi)) (at 'tranches multi)))))
 
   (defun rotate
     ( slot:string)
     (test.pool.rotate ))
 
-  (defun allocate
-      ( account:string           ;; multi account
-        amount:decimal           ;; total amount to allocate
-        size:decimal             ;; bond size
-        tranche:object{tranche}  ;; tranche
-      )
-      (format "{} {} {} {}" [account amount size tranche])
-  )
-
   ; (defun allocate
-  ;   ( account:string           ;; multi account
-  ;     amount:decimal           ;; total amount to allocate
-  ;     size:decimal             ;; bond size
-  ;     tranche:object{tranche}  ;; tranche
-  ;   )
-  ;   (let ( (to (at 'account tranche))
-  ;          ;; compute tranche amount
-  ;          (tranche-amount (* amount (/ (at 'amount tranche) size))) )
-  ;     (install-capability
-  ;       (coin.TRANSFER account to tranche-amount))
-  ;     (coin.transfer account to tranche-amount))
+  ;     ( account:string           ;; multi account
+  ;       amount:decimal           ;; total amount to allocate
+  ;       size:decimal             ;; bond size
+  ;       tranche:object{tranche}  ;; tranche
+  ;     )
+  ;     (format "{} {} {} {}" [account amount size tranche])
   ; )
+  ;
+  (defun allocate
+    ( account:string           ;; multi account
+      amount:decimal           ;; total amount to allocate
+      size:decimal             ;; bond size
+      tranche:object{tranche}  ;; tranche
+    )
+    (let ( (to (at 'account tranche))
+           ;; compute tranche amount
+           (tranche-amount (* amount (/ (at 'amount tranche) size))) )
+       (install-capability
+         (coin.TRANSFER account to tranche-amount))
+       (coin.transfer account to tranche-amount)
+      (format "transfer {} {} {}" [account to tranche-amount]))
+  )
 )
 
 (create-table last-id-table)

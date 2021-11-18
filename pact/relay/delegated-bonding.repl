@@ -96,24 +96,24 @@
 
 ;; Multi2
 (begin-tx)
-(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
-(test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
+(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 4000.0)] }])
+(test.delegated-bonding.new-tranche "Alice" "multi2" 4000.0 (read-keyset "Alice"))
 
-(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
-(test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 6000.0)] }])
+(test.delegated-bonding.new-tranche "Pam" "multi2" 6000.0 (read-keyset "Pam"))
 (commit-tx)
 
-(begin-tx)
-(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
-(test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
-(commit-tx)
+; (begin-tx)
+; (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
+; (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
+; (commit-tx)
 
-(begin-tx)
-(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
-(test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
-(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
-(test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
-(commit-tx)
+; (begin-tx)
+; (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
+; (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
+; (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
+; (test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
+; (commit-tx)
 
 (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-18")})
@@ -127,12 +127,12 @@
 ;; Multi3
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi3" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Tranche 8 reserved"
+    "multi3:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi3" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi3" 2000.0)] }])
 (expect "new-tranche: success George"
-    "Tranche 9 reserved"
+    "multi3:George"
 (test.delegated-bonding.new-tranche "George" "multi3" 2000.0 (read-keyset "George")))
 (commit-tx)
 
@@ -146,12 +146,12 @@
 (begin-tx)
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi4" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Tranche 10 reserved"
+    "multi4:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi4" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi4" 2000.0)] }])
 (expect "new-tranche: success George"
-    "Tranche 11 reserved"
+    "multi4:George"
 (test.delegated-bonding.new-tranche "George" "multi4" 2000.0 (read-keyset "George")))
 (commit-tx)
 (begin-tx)
@@ -164,12 +164,12 @@
 (begin-tx)
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi5" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Tranche 12 reserved"
+    "multi5:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi5" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi5" 2000.0)] }])
 (expect "new-tranche: success George"
-    "Tranche 13 reserved"
+    "multi5:George"
 (test.delegated-bonding.new-tranche "George" "multi5" 2000.0 (read-keyset "George")))
 (commit-tx)
 
@@ -183,12 +183,12 @@
 (begin-tx)
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi6" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Tranche 14 reserved"
+    "multi6:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi6" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi6" 2000.0)] }])
 (expect "new-tranche: success George"
-    "Tranche 15 reserved"
+    "multi6:George"
 (test.delegated-bonding.new-tranche "George" "multi6" 2000.0 (read-keyset "George")))
 (commit-tx)
 (begin-tx)
@@ -252,6 +252,7 @@
     (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
  (commit-tx)
 
+ (begin-tx)
  (env-sigs
    [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}
     ])
@@ -287,7 +288,7 @@
 
  (expect "validated 3" true
    (test.relay.validate (read-msg 'header)))
-
+ (commit-tx)
 ;;; next header?
    ; (env-sigs
    ;   [ {'key: "george",'caps: [(test.relay.BONDER "multi5:2021-03-18")]}
@@ -296,7 +297,7 @@
    ;   "Write succeeded"
    ;   (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
 
-
+ (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-20")})
 (coin.get-balance 'George)
 (coin.get-balance 'Alice)
@@ -308,16 +309,31 @@
   (expect-failure "renew Alice 2: too soon"
     "Bond still active"
     (test.delegated-bonding.renew-multibond 'multi2))
-
+ (commit-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-05")})
 (begin-tx)
 (env-sigs
-  [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")
+  [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")
                             (test.pool.ROTATE "multi2:2021-03-18")]}
   ])
 
-(test.delegated-bonding.renew-multibond 'multi2)
+;(test.delegated-bonding.renew-multibond 'multi2)
 
+
+
+(expect "renew multi2"
+   ["transfer multi2 Alice 2.0" "transfer multi2 Pam 3.0"]
+  (test.delegated-bonding.renew-multibond "multi2"))
+(expect "renew events multi2 just activity fee"
+[{"name": "test.pool.ROTATE","params": ["multi2:2021-03-18"]}
+ {"name": "test.pool.BONDER","params": ["multi2:2021-03-18"]}
+ {"name": "coin.TRANSFER","params": ["relay-bank" "multi2" 5.0]}
+ {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi2:2021-03-18" 5.0]}
+ {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi2" 10000.0 30 1]}
+ {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232998.3]}
+ {"name": "coin.TRANSFER","params": ["multi2" "Alice" 2.0]}
+ {"name": "coin.TRANSFER","params": ["multi2" "Pam" 3.0]}]
+   (map (remove 'module-hash) (env-events true)))
 ;; Todo rotate to operator
 ; (test.delegated-bonding.rotate 'multi2)
 
