@@ -76,7 +76,7 @@
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
 (expect "new-tranche: success Alice"
-    "Tranche 1 reserved"
+    "multi1:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 3000.0)] }])
@@ -209,7 +209,7 @@
  (commit-tx)
  (env-hash (hash 'envhash2))
  (env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
- (env-data {'header: { 'hash: "h2", 'number: 1, 'receipts-root: "r2" }})
+ (env-data {'header: { 'hash: "h2", 'number: 1, 'receipts-root: "r2" }, 'George: ['george]})
  (begin-tx)
  (env-sigs
    [ {'key: "george",'caps: [(test.relay.BONDER "multi1:2021-03-17")]}
@@ -289,15 +289,9 @@
  (expect "validated 3" true
    (test.relay.validate (read-msg 'header)))
  (commit-tx)
-;;; next header?
-   ; (env-sigs
-   ;   [ {'key: "george",'caps: [(test.relay.BONDER "multi5:2021-03-18")]}
-   ;   ])
-   ; (expect "endorse multi5:2021-03-18"
-   ;   "Write succeeded"
-   ;   (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
 
- (begin-tx)
+
+(begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-20")})
 (coin.get-balance 'George)
 (coin.get-balance 'Pam)
@@ -310,18 +304,15 @@
   (expect-failure "renew Alice 2: too soon"
     "Bond still active"
     (test.delegated-bonding.renew-multibond 'multi2))
- (commit-tx)
+(commit-tx)
+
+; RENEW multi2
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-05")})
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")
                             (test.pool.ROTATE "multi2:2021-03-18")]}
   ])
-
-;(test.delegated-bonding.renew-multibond 'multi2)
-
-
-
 (expect "renew multi2"
    ["transfer multi2 Alice 2.0" "transfer multi2 Pam 3.0"]
   (test.delegated-bonding.renew-multibond "multi2"))
@@ -335,15 +326,76 @@
  {"name": "coin.TRANSFER","params": ["multi2" "Alice" 2.0]}
  {"name": "coin.TRANSFER","params": ["multi2" "Pam" 3.0]}]
    (map (remove 'module-hash) (env-events true)))
-
-;; Todo rotate to operator
-; (test.delegated-bonding.rotate 'multi2)
-
 (commit-tx)
 (coin.get-balance 'multi2)
 (coin.get-balance 'George)
 (coin.get-balance 'Pam)
 (coin.get-balance 'Alice)
+
+; during renewal the control was rotated to the contract
+; rotate the bond back to the operator
+(begin-tx)
+(expect "rotate multi2"
+   "operator:KeySet {keys: [george],pred: keys-all}"
+  (test.delegated-bonding.rotate "multi2"))
+(commit-tx)
+
+; RENEW multi3
+(begin-tx)
+(env-sigs
+  [ {'key: "george",'caps: [(test.pool.BONDER "multi3:2021-03-18")
+                            (test.pool.ROTATE "multi3:2021-03-18")]}
+  ])
+(expect "renew multi3"
+   ["transfer multi3 Alice 4.0" "transfer multi3 George 1.0"]
+  (test.delegated-bonding.renew-multibond "multi3"))
+(expect "renew events multi3 just 1 activity fee"
+[{"name": "test.pool.ROTATE","params": ["multi3:2021-03-18"]}
+ {"name": "test.pool.BONDER","params": ["multi3:2021-03-18"]}
+ {"name": "coin.TRANSFER","params": ["relay-bank" "multi3" 5.0]}
+ {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi3:2021-03-18" 5.0]}
+ {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi3" 10000.0 30 1]}
+ {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232993.3]}
+ {"name": "coin.TRANSFER","params": ["multi3" "Alice" 4.0]}
+ {"name": "coin.TRANSFER","params": ["multi3" "George" 1.0]}]
+   (map (remove 'module-hash) (env-events true)))
+(commit-tx)
+(begin-tx)
+(expect "rotate multi2"
+   "operator:KeySet {keys: [george],pred: keys-all}"
+  (test.delegated-bonding.rotate "multi3"))
+(commit-tx)
+
+; stop multi1 (also cannot renew because no activity!!)
+(env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
+(env-sigs
+  [ {'key: "george",'caps: [(test.pool.ROTATE "multi1:2021-03-17")]}
+  ])
+(test.delegated-bonding.unbond "multi1")
+
+; try another round of activty
+(begin-tx)
+(map (remove 'module-hash) (env-events true))
+ (commit-tx)
+ (env-hash (hash 'envhash2))
+ (env-chain-data {'prev-block-hash: (hash 'prevblockhash11113)})
+ (env-data {'header: { 'hash: "h3", 'number: 1, 'receipts-root: "r3" }})
+ (begin-tx)
+ (env-sigs
+   [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")]}
+   ])
+ (expect "multi1 2 propose"
+   "Write succeeded"
+   (test.relay.propose
+     (read-msg 'header)
+     "multi2:2021-03-18"))
+(expect "propose events"
+      [{"name": "test.relay.PROPOSE","params": [1 "h2" "multi1:2021-03-17" ["multi2:2021-03-18" "multi3:2021-03-18" "multi4:2021-03-18" "multi5:2021-03-18" "multi6:2021-03-18"]]}]
+   (map (remove 'module-hash) (env-events true)))
+    (expect-failure "not validated 0"
+    "Not accepted"
+   (test.relay.validate (read-msg 'header)))
+(commit-tx)
 
 ;(coin.get-balance 'Alice)
 ;(env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 3000.0)] }])

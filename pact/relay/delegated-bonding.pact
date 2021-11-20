@@ -176,7 +176,17 @@
       { 'operator := operator,
         'bondId := bondId }
       (install-capability (test.pool.ROTATE bondId))
-      (test.pool.rotate bondId operator)))
+      (test.pool.rotate bondId operator)
+      (format "operator:{}" [operator])))
+
+
+  (defun unbond
+    (slot:string)
+    (with-read slots slot
+      { 'bondId := bondId }
+      (test.pool.rotate bondId (create-module-guard 'multibond))
+      (install-capability (test.pool.BONDER bondId))
+      (test.pool.unbond bondId)))
 
   (defun allocate
     ( account:string           ;; multi account
