@@ -22,10 +22,6 @@
 
   (defconst POOL 'kda-relay-pool)
 
-  (defschema last-id-schema
-    last-id:integer)
-  (deftable last-id-table:{last-id-schema})
-
   (use util.guards)
 
   (defschema tranche
@@ -209,7 +205,6 @@
   )
 )
 
-(create-table last-id-table)
 (create-table slots)
 (create-table tranches)
 (create-table multis)
