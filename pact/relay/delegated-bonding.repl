@@ -360,6 +360,12 @@
  {"name": "coin.TRANSFER","params": ["multi3" "George" 1.0]}]
    (map (remove 'module-hash) (env-events true)))
 (commit-tx)
+
+(coin.get-balance 'multi2)
+(coin.get-balance 'George)
+(coin.get-balance 'Pam)
+(coin.get-balance 'Alice)
+
 (begin-tx)
 (expect "rotate multi2"
    "operator:KeySet {keys: [george],pred: keys-all}"
@@ -369,9 +375,17 @@
 ; stop multi1 (also cannot renew because no activity!!)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
 (env-sigs
-  [ {'key: "george",'caps: [(test.pool.ROTATE "multi1:2021-03-17")]}
+  [ {'key: "george",'caps: [(test.pool.BONDER "multi1:2021-03-17")]}
   ])
-(test.delegated-bonding.unbond "multi1")
+(expect "unbond multi1"
+ ["transfer multi1 Alice 8000.0" "transfer multi1 George 2000.0"]
+(test.delegated-bonding.unbond "multi1"))
+
+(coin.get-balance 'multi2)
+(coin.get-balance 'George)
+(coin.get-balance 'Pam)
+(coin.get-balance 'Alice)
+
 
 ; try another round of activty
 (begin-tx)

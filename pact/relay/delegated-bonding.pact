@@ -184,9 +184,14 @@
     (slot:string)
     (with-read slots slot
       { 'bondId := bondId }
-      (test.pool.rotate bondId (create-module-guard 'multibond))
-      (install-capability (test.pool.BONDER bondId))
-      (test.pool.unbond bondId)))
+      (let* ( (old-balance (coin.get-balance slot))
+              (multi (read multis slot)))
+        (test.pool.unbond bondId)
+        (let ( (amount (- (coin.get-balance slot) old-balance)) )
+          ;; allocate
+          (map
+            (allocate slot amount (at 'size multi)) (at 'tranches multi)))
+        )))
 
   (defun allocate
     ( account:string           ;; multi account
