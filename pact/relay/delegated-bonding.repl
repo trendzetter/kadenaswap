@@ -201,177 +201,174 @@
 ; ENDORSING
 (begin-tx)
 (map (remove 'module-hash) (env-events true))
- (commit-tx)
- (env-hash (hash 'envhash2))
- (env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
- (env-data {'header: { 'hash: "h2", 'number: 1, 'receipts-root: "r2" }, 'George: ['george]})
- (begin-tx)
- (env-sigs
-   [ {'key: "george",'caps: [(test.relay.BONDER "multi1:2021-03-17")]}
-   ])
- (expect "multi1 1 propose"
-   "Write succeeded"
-   (test.relay.propose
-     (read-msg 'header)
-     "multi1:2021-03-17"))
+(commit-tx)
+(env-hash (hash 'envhash2))
+(env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
+(env-data {'header: { 'hash: "h2", 'number: 1, 'receipts-root: "r2" }, 'George: ['george]})
+(begin-tx)
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi1:2021-03-17")]}])
+
+(expect "multi1 1 propose"
+  "Write succeeded"
+  (test.relay.propose
+    (read-msg 'header)
+    "multi1:2021-03-17"))
 (expect "propose events"
       [{"name": "test.relay.PROPOSE","params": [1 "h2" "multi1:2021-03-17" ["multi2:2021-03-18" "multi3:2021-03-18" "multi4:2021-03-18" "multi5:2021-03-18" "multi6:2021-03-18"]]}]
    (map (remove 'module-hash) (env-events true)))
-    (expect-failure "not validated 0"
-    "Not accepted"
-   (test.relay.validate (read-msg 'header)))
+(expect-failure "not validated 0"
+ "Not accepted"
+ (test.relay.validate (read-msg 'header)))
 (commit-tx)
 
- (begin-tx)
+(begin-tx)
  ;; endorser success
-  (env-sigs
-    [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")]}
-    ])
-   (expect "endorse multi2:2021-03-18#"
-    "Write succeeded"
-    (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
-   (expect "endorse events"
-      [ {"name": "test.relay.ENDORSE","params": ["h2" "multi2:2021-03-18" false]}
-       {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi2:2021-03-18" 1]}
-      ]
-     (map (remove 'module-hash) (env-events true)))
-  (expect "activity 1"
-     1
-     (at 'activity (test.pool.get-bond "multi2:2021-03-18")))
- (expect-failure "not validated 1"
-    "Not accepted"
-    (test.relay.validate (read-msg 'header)))
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")]}])
 
-  (expect-failure "dupe failure"
-    "Duplicate endorse"
-    (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
- (commit-tx)
+(expect "endorse multi2:2021-03-18#"
+ "Write succeeded"
+ (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h2" "multi2:2021-03-18" false]}
+    {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi2:2021-03-18" 1]}]
 
- (begin-tx)
- (env-sigs
-   [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}
-    ])
-  (expect "endorse multi3:2021-03-18"
-    "Write succeeded"
-   (test.relay.endorse (read-msg 'header) "multi3:2021-03-18"))
- (expect "endorse events"
-    [ {"name": "test.relay.ENDORSE","params": ["h2" "multi3:2021-03-18" false]}
-      {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi3:2021-03-18" 1]}
-    ]
-   (map (remove 'module-hash) (env-events true)))
- (expect "activity 2"
+  (map (remove 'module-hash) (env-events true)))
+(expect "activity 1"
    1
-   (at 'activity (test.pool.get-bond "multi3:2021-03-18")))
- (expect-failure "not validated 2"
+   (at 'activity (test.pool.get-bond "multi2:2021-03-18")))
+(expect-failure "not validated 1"
    "Not accepted"
    (test.relay.validate (read-msg 'header)))
 
- (env-sigs
-   [ {'key: "george",'caps: [(test.relay.BONDER "multi4:2021-03-18")]}
-   ])
- (expect "endorse multi4:2021-03-18"
-   "Write succeeded"
-   (test.relay.endorse (read-msg 'header) "multi4:2021-03-18"))
- (expect "endorse events"
-    [ {"name": "test.relay.ENDORSE","params": ["h2" "multi4:2021-03-18" true]}
-      {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi4:2021-03-18" 1]}
-    ]
-   (map (remove 'module-hash) (env-events true)))
- (expect "activity 3"
-   1
-   (at 'activity (test.pool.get-bond "multi4:2021-03-18")))
+(expect-failure "dupe failure"
+  "Duplicate endorse"
+  (test.relay.endorse (read-msg 'header) "multi2:2021-03-18"))
+(commit-tx)
 
- (expect "validated 3" true
-   (test.relay.validate (read-msg 'header)))
- (commit-tx)
+(begin-tx)
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}])
+
+(expect "endorse multi3:2021-03-18"
+  "Write succeeded"
+ (test.relay.endorse (read-msg 'header) "multi3:2021-03-18"))
+
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h2" "multi3:2021-03-18" false]}
+     {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi3:2021-03-18" 1]}]
+  (map (remove 'module-hash) (env-events true)))
+
+(expect "activity 2"
+  1
+  (at 'activity (test.pool.get-bond "multi3:2021-03-18")))
+
+(expect-failure "not validated 2"
+  "Not accepted"
+  (test.relay.validate (read-msg 'header)))
+
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi4:2021-03-18")]}])
+
+(expect "endorse multi4:2021-03-18"
+  "Write succeeded"
+  (test.relay.endorse (read-msg 'header) "multi4:2021-03-18"))
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h2" "multi4:2021-03-18" true]}
+     {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi4:2021-03-18" 1]}]
+
+  (map (remove 'module-hash) (env-events true)))
+(expect "activity 3"
+  1
+  (at 'activity (test.pool.get-bond "multi4:2021-03-18")))
+
+(expect "validated 3" true
+  (test.relay.validate (read-msg 'header)))
+(commit-tx)
 
 
 ;; second header endore
- (begin-tx)
- (map (remove 'module-hash) (env-events true))
-  (commit-tx)
-  (env-hash (hash 'envhash2))
-  (env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
-  (env-data {'header: { 'hash: "h3", 'number: 1, 'receipts-root: "r2" }, 'George: ['george]})
-  (begin-tx)
-  (env-sigs
-    [ {'key: "george",'caps: [(test.relay.BONDER "multi6:2021-03-18")]}
-    ])
-  (expect "multi1 6 propose"
-    "Write succeeded"
-    (test.relay.propose
-      (read-msg 'header)
-      "multi6:2021-03-18"))
- (expect "propose events"
-       [{"name": "test.relay.PROPOSE","params": [1 "h3" "multi6:2021-03-18" ["multi1:2021-03-17" "multi2:2021-03-18" "multi3:2021-03-18" "multi4:2021-03-18" "multi5:2021-03-18"]]}]
-    (map (remove 'module-hash) (env-events true)))
-     (expect-failure "not validated 0"
-     "Not accepted"
-    (test.relay.validate (read-msg 'header)))
- (commit-tx)
+(begin-tx)
+(map (remove 'module-hash) (env-events true))
+(commit-tx)
+(env-hash (hash 'envhash2))
+(env-chain-data {'prev-block-hash: (hash 'prevblockhash11112)})
+(env-data {'header: { 'hash: "h3", 'number: 1, 'receipts-root: "r2" }, 'George: ['george]})
+(begin-tx)
+(env-sigs
+  [ {'key: "george",'caps: [(test.relay.BONDER "multi6:2021-03-18")]}])
 
-  (begin-tx)
-  ;; endorser success
-   (env-sigs
-     [ {'key: "george",'caps: [(test.relay.BONDER "multi5:2021-03-18")]}
-     ])
-    (expect "endorse h3:2021-03-18#"
-     "Write succeeded"
-     (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
-    (expect "endorse events"
-       [ {"name": "test.relay.ENDORSE","params": ["h3" "multi5:2021-03-18" false]}
-        {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi5:2021-03-18" 1]}
-       ]
-      (map (remove 'module-hash) (env-events true)))
-   (expect "activity 1"
-      1
-      (at 'activity (test.pool.get-bond "multi5:2021-03-18")))
-  (expect-failure "not validated 1"
-     "Not accepted"
-     (test.relay.validate (read-msg 'header)))
+(expect "multi1 6 propose"
+  "Write succeeded"
+  (test.relay.propose
+    (read-msg 'header)
+    "multi6:2021-03-18"))
+(expect "propose events"
+      [{"name": "test.relay.PROPOSE","params": [1 "h3" "multi6:2021-03-18" ["multi1:2021-03-17" "multi2:2021-03-18" "multi3:2021-03-18" "multi4:2021-03-18" "multi5:2021-03-18"]]}]
+   (map (remove 'module-hash) (env-events true)))
+(expect-failure "not validated 0"
+ "Not accepted"
+ (test.relay.validate (read-msg 'header)))
+(commit-tx)
 
-   (expect-failure "dupe failure"
-     "Duplicate endorse"
-     (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
-  (commit-tx)
+(begin-tx)
+ ;; endorser success
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi5:2021-03-18")]}])
 
-  (begin-tx)
-  (env-sigs
-    [ {'key: "george",'caps: [(test.relay.BONDER "multi4:2021-03-18")]}
-     ])
-   (expect "endorse multi4:2021-03-18"
-     "Write succeeded"
-    (test.relay.endorse (read-msg 'header) "multi4:2021-03-18"))
-  (expect "endorse events"
-     [ {"name": "test.relay.ENDORSE","params": ["h3" "multi4:2021-03-18" false]}
-       {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi4:2021-03-18" 2]}
-     ]
-    (map (remove 'module-hash) (env-events true)))
-  (expect "activity 2"
-    2
-    (at 'activity (test.pool.get-bond "multi4:2021-03-18")))
-  (expect-failure "not validated 2"
-    "Not accepted"
-    (test.relay.validate (read-msg 'header)))
+(expect "endorse h3:2021-03-18#"
+ "Write succeeded"
+ (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
 
-  (env-sigs
-    [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}
-    ])
-  (expect "endorse multi3:2021-03-18"
-    "Write succeeded"
-    (test.relay.endorse (read-msg 'header) "multi3:2021-03-18"))
-  (expect "endorse events"
-     [ {"name": "test.relay.ENDORSE","params": ["h3" "multi3:2021-03-18" true]}
-       {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi3:2021-03-18" 2]}
-     ]
-    (map (remove 'module-hash) (env-events true)))
-  (expect "activity 2"
-    2
-    (at 'activity (test.pool.get-bond "multi3:2021-03-18")))
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h3" "multi5:2021-03-18" false]}
+    {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi5:2021-03-18" 1]}]
+  (map (remove 'module-hash) (env-events true)))
 
-  (expect "validated 3" true
-    (test.relay.validate (read-msg 'header)))
-  (commit-tx)
+(expect "activity 1"
+   1
+   (at 'activity (test.pool.get-bond "multi5:2021-03-18")))
+(expect-failure "not validated 1"
+   "Not accepted"
+   (test.relay.validate (read-msg 'header)))
+
+(expect-failure "dupe failure"
+  "Duplicate endorse"
+  (test.relay.endorse (read-msg 'header) "multi5:2021-03-18"))
+(commit-tx)
+
+(begin-tx)
+(env-sigs [{'key: "george",'caps: [(test.relay.BONDER "multi4:2021-03-18")]}])
+
+(expect "endorse multi4:2021-03-18"
+  "Write succeeded"
+ (test.relay.endorse (read-msg 'header) "multi4:2021-03-18"))
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h3" "multi4:2021-03-18" false]}
+     {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi4:2021-03-18" 2]}]
+
+  (map (remove 'module-hash) (env-events true)))
+(expect "activity 2"
+  2
+  (at 'activity (test.pool.get-bond "multi4:2021-03-18")))
+(expect-failure "not validated 2"
+  "Not accepted"
+  (test.relay.validate (read-msg 'header)))
+
+(env-sigs
+  [ {'key: "george",'caps: [(test.relay.BONDER "multi3:2021-03-18")]}])
+
+(expect "endorse multi3:2021-03-18"
+  "Write succeeded"
+  (test.relay.endorse (read-msg 'header) "multi3:2021-03-18"))
+(expect "endorse events"
+   [ {"name": "test.relay.ENDORSE","params": ["h3" "multi3:2021-03-18" true]}
+     {"name": "test.pool.ACTIVITY","params": ["kda-relay-pool" "multi3:2021-03-18" 2]}]
+
+  (map (remove 'module-hash) (env-events true)))
+(expect "activity 2"
+  2
+  (at 'activity (test.pool.get-bond "multi3:2021-03-18")))
+
+(expect "validated 3" true
+  (test.relay.validate (read-msg 'header)))
+(commit-tx)
 
 
 ; RENEWALS
@@ -385,11 +382,11 @@
 ; renew too soon
 (env-sigs
   [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")
-                            (test.pool.ROTATE "multi2:2021-03-18")]}
-  ])
-  (expect-failure "renew Alice 2: too soon"
-    "Bond still active"
-    (test.delegated-bonding.renew-multibond 'multi2))
+                            (test.pool.ROTATE "multi2:2021-03-18")]}])
+
+(expect-failure "renew Alice 2: too soon"
+  "Bond still active"
+  (test.delegated-bonding.renew-multibond 'multi2))
 (commit-tx)
 
 
@@ -398,21 +395,21 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")
-                            (test.pool.ROTATE "multi2:2021-03-18")]}
-  ])
+                            (test.pool.ROTATE "multi2:2021-03-18")]}])
+
 (expect "renew multi2"
    ["transfer multi2 Alice 2.0" "transfer multi2 Pam 3.0"]
   (test.delegated-bonding.renew-multibond "multi2"))
 (expect "renew events multi2 just activity fee"
-[{"name": "test.pool.ROTATE","params": ["multi2:2021-03-18"]}
- {"name": "test.pool.BONDER","params": ["multi2:2021-03-18"]}
- {"name": "coin.TRANSFER","params": ["relay-bank" "multi2" 5.0]}
- {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi2:2021-03-18" 5.0]}
- {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi2" 10000.0 30 1]}
- {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232998.3]}
- {"name": "coin.TRANSFER","params": ["multi2" "Alice" 2.0]}
- {"name": "coin.TRANSFER","params": ["multi2" "Pam" 3.0]}]
-   (map (remove 'module-hash) (env-events true)))
+ [{"name": "test.pool.ROTATE","params": ["multi2:2021-03-18"]}
+  {"name": "test.pool.BONDER","params": ["multi2:2021-03-18"]}
+  {"name": "coin.TRANSFER","params": ["relay-bank" "multi2" 5.0]}
+  {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi2:2021-03-18" 5.0]}
+  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi2" 10000.0 30 1]}
+  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232998.3]}
+  {"name": "coin.TRANSFER","params": ["multi2" "Alice" 2.0]}
+  {"name": "coin.TRANSFER","params": ["multi2" "Pam" 3.0]}]
+ (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 (coin.get-balance 'multi2)
 (coin.get-balance 'George)
@@ -431,8 +428,8 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi3:2021-03-18")
-                            (test.pool.ROTATE "multi3:2021-03-18")]}
-  ])
+                            (test.pool.ROTATE "multi3:2021-03-18")]}])
+
 (expect "renew multi3"
    ["transfer multi3 Alice 8.0" "transfer multi3 George 2.0"]
   (test.delegated-bonding.renew-multibond "multi3"))
@@ -444,8 +441,8 @@
   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi3" 10000.0 30 1]}
   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232988.3]}
   {"name": "coin.TRANSFER","params": ["multi3" "Alice" 8.0]}
-  {"name": "coin.TRANSFER","params": ["multi3" "George" 2.0]} ]
-   (map (remove 'module-hash) (env-events true)))
+  {"name": "coin.TRANSFER","params": ["multi3" "George" 2.0]}]
+ (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
 (coin.get-balance 'multi2)
@@ -463,8 +460,8 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi4:2021-03-18")
-                            (test.pool.ROTATE "multi4:2021-03-18")]}
-  ])
+                            (test.pool.ROTATE "multi4:2021-03-18")]}])
+
 (expect "renew multi4"
    ["transfer multi4 Alice 8.0" "transfer multi4 George 2.0"]
   (test.delegated-bonding.renew-multibond "multi4"))
@@ -495,21 +492,21 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi5:2021-03-18")
-                            (test.pool.ROTATE "multi5:2021-03-18")]}
-  ])
+                            (test.pool.ROTATE "multi5:2021-03-18")]}])
+
 (expect "renew multi5"
    ["transfer multi5 Alice 4.0" "transfer multi5 George 1.0"]
   (test.delegated-bonding.renew-multibond "multi5"))
 (expect "renew events multi5 just 1 activity fee"
-[{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
- {"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
- {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 5.0]}
- {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
- {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
- {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
- {"name": "coin.TRANSFER","params": ["multi5" "Alice" 4.0]}
- {"name": "coin.TRANSFER","params": ["multi5" "George" 1.0]}]
-   (map (remove 'module-hash) (env-events true)))
+ [{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
+  {"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
+  {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 5.0]}
+  {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
+  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
+  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
+  {"name": "coin.TRANSFER","params": ["multi5" "Alice" 4.0]}
+  {"name": "coin.TRANSFER","params": ["multi5" "George" 1.0]}]
+ (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
 (coin.get-balance 'multi2)
@@ -538,11 +535,11 @@
 ; stop multi1 (also cannot renew because no activity!!)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
 (env-sigs
-  [ {'key: "george",'caps: [(test.pool.BONDER "multi1:2021-03-17")]}
-  ])
+  [ {'key: "george",'caps: [(test.pool.BONDER "multi1:2021-03-17")]}])
+
 (expect "unbond multi1"
  ["transfer multi1 Alice 8000.0" "transfer multi1 George 2000.0"]
-(test.delegated-bonding.unbond "multi1"))
+ (test.delegated-bonding.unbond "multi1"))
 
 (coin.get-balance 'multi1)
 (coin.get-balance 'George)
