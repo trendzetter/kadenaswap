@@ -36,6 +36,7 @@
     ;; key:  accountname for the autonomous controlled account
     amount:decimal     ;; total and max amount
     operator:guard     ;; keyset that will operator the app
+    operator-account:string
     fee:decimal        ;; percentage operator fee
     bondId:string        ;; Id of the bond
   )
@@ -70,10 +71,12 @@
   (defun new-slot:string
     ( account:string
       amount:decimal
+      operator-account:string
       operator:guard
       fee:decimal
     )
-    (insert slots account { 'amount: amount, 'operator: operator, 'fee: fee, 'bondId: "" })
+    ;; check valid-account
+    (insert slots account { 'amount: amount, 'operator-account: operator-account, 'operator: operator, 'fee: fee, 'bondId: "" })
     (coin.create-account account (create-module-guard 'reservations))
     (format "Slot {} added" [account])
   )
@@ -157,10 +160,15 @@
       (install-capability (test.pool.BONDER bondId))
       (test.pool.renew (at 'bondId slot))
       ;; compute new amount
-      (let ( (amount (- (coin.get-balance account) old-balance)) )
+      (let* ( (amount (- (coin.get-balance account) old-balance))
+             (operator-fee (* (/ amount 100) (at 'fee slot)))
+             (rewards (- amount operator-fee))
+             (operator-account (at 'operator-account slot)) )
         ;; allocate
+        (install-capability (coin.TRANSFER account operator-account operator-fee))
+        (coin.transfer-create account operator-account (at 'operator slot) operator-fee)
         (map
-          (allocate account amount (at 'size multi)) (at 'tranches multi)))
+          (allocate account rewards (at 'size multi)) (at 'tranches multi)))
       ;; ISSUe: capability already fired
       ; (rotate account)
       ))
