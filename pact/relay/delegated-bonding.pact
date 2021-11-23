@@ -109,7 +109,10 @@
   (with-capability (RESERVE account amount) 1
   (let ((total (get-slot-total-amount slot)))
     (with-read slots slot
-      {'amount := maximum }
+      {'amount := maximum,
+       'operator-account := operatoraccount }
+      (enforce (!= account operatoraccount)
+       "Operator account cannot join the bond" )
       (enforce (>= maximum (+ amount total))
        "Tranche cannot be bigger than the remaining amount for the slot" )
       (let ((id: string (format "{}:{}" [slot account])))
@@ -209,7 +212,7 @@
        (install-capability
          (coin.TRANSFER account to tranche-amount))
        (coin.transfer account to tranche-amount)
-      (format "transfer {} {} {}" [account to tranche-amount]))
+      (format "{}:{}" [to tranche-amount]))
   )
 )
 

@@ -74,16 +74,21 @@
 ;; Multi1
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
-(expect "new-tranche: success Alice"
-    "multi1:Alice"
-(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")))
+; (expect "new-tranche: success Alice"
+;     "multi1:Alice"
+(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")); )
 
+; failures tests
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 3000.0)] }])
 (expect-failure "Tranche cannot be bigger than the remaining amount for the slot"
   (test.delegated-bonding.new-tranche "George" "multi1" 3000.0 (read-keyset "George")))
 
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 2000.0)] }])
-(test.delegated-bonding.new-tranche "George" "multi1" 2000.0 (read-keyset "George"))
+(expect-failure "Operator account cannot join the bond"
+  (test.delegated-bonding.new-tranche "George" "multi1" 2000.0 (read-keyset "George")))
+
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi1" 2000.0)] }])
+(test.delegated-bonding.new-tranche "Pam" "multi1" 2000.0 (read-keyset "Pam"))
 (commit-tx)
 
 (begin-tx)
@@ -129,10 +134,10 @@
     "multi3:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi3" 8000.0 (read-keyset "Alice")))
 
-(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi3" 2000.0)] }])
-(expect "new-tranche: success George"
-    "multi3:George"
-(test.delegated-bonding.new-tranche "George" "multi3" 2000.0 (read-keyset "George")))
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi3" 2000.0)] }])
+(expect "new-tranche: success Pam"
+    "multi3:Pam"
+(test.delegated-bonding.new-tranche "Pam" "multi3" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 
 (begin-tx)
@@ -148,10 +153,10 @@
     "multi4:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi4" 8000.0 (read-keyset "Alice")))
 
-(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi4" 2000.0)] }])
-(expect "new-tranche: success George"
-    "multi4:George"
-(test.delegated-bonding.new-tranche "George" "multi4" 2000.0 (read-keyset "George")))
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi4" 2000.0)] }])
+(expect "new-tranche: success Pam"
+    "multi4:Pam"
+(test.delegated-bonding.new-tranche "Pam" "multi4" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 (begin-tx)
 (expect "Multi4 activated"
@@ -166,10 +171,10 @@
     "multi5:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi5" 8000.0 (read-keyset "Alice")))
 
-(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi5" 2000.0)] }])
-(expect "new-tranche: success George"
-    "multi5:George"
-(test.delegated-bonding.new-tranche "George" "multi5" 2000.0 (read-keyset "George")))
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi5" 2000.0)] }])
+(expect "new-tranche: success Pam"
+    "multi5:Pam"
+(test.delegated-bonding.new-tranche "Pam" "multi5" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 
 (begin-tx)
@@ -185,10 +190,10 @@
     "multi6:Alice"
 (test.delegated-bonding.new-tranche "Alice" "multi6" 8000.0 (read-keyset "Alice")))
 
-(env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi6" 2000.0)] }])
-(expect "new-tranche: success George"
-    "multi6:George"
-(test.delegated-bonding.new-tranche "George" "multi6" 2000.0 (read-keyset "George")))
+(env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi6" 2000.0)] }])
+(expect "new-tranche: success Pam"
+    "multi6:Pam"
+(test.delegated-bonding.new-tranche "Pam" "multi6" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 (begin-tx)
 (expect "Multi6 activated"
@@ -397,7 +402,7 @@
                             (test.pool.ROTATE "multi2:2021-03-18")]}])
 
 (expect "renew multi2"
-   ["transfer multi2 Alice 1.94" "transfer multi2 Pam 2.91"]
+   ["Alice:1.94" "Pam:2.91"]
   (test.delegated-bonding.renew-multibond "multi2"))
 (expect "renew events multi2 just activity fee"
  [{"name": "test.pool.ROTATE","params": ["multi2:2021-03-18"]}
@@ -433,7 +438,7 @@
 ;(expect "renew multi3"
 ;   ["transfer multi3 Alice 8.0" "transfer multi3 George 2.0"]
 ; TRANSFER exceeded for balance 0.0!!!	TODO: ENFORCE OPERATOR CANNOT BOND
-  (test.delegated-bonding.renew-multibond "multi3");)
+(test.delegated-bonding.renew-multibond "multi3");)
 (expect "renew events multi3 just 1 activity fee"
  [{"name": "test.pool.ROTATE","params": ["multi3:2021-03-18"]}
   {"name": "test.pool.BONDER","params": ["multi3:2021-03-18"]}
@@ -441,8 +446,9 @@
   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi3:2021-03-18" 10.0]}
   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi3" 10000.0 30 1]}
   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232988.3]}
-  {"name": "coin.TRANSFER","params": ["multi3" "Alice" 8.0]}
-  {"name": "coin.TRANSFER","params": ["multi3" "George" 2.0]}]
+  {"name": "coin.TRANSFER","params": ["multi3" "George" 0.2]}
+  {"name": "coin.TRANSFER","params": ["multi3" "Alice" 7.84]}
+  {"name": "coin.TRANSFER","params": ["multi3" "Pam" 1.96]}]
  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
@@ -464,7 +470,7 @@
                             (test.pool.ROTATE "multi4:2021-03-18")]}])
 
 (expect "renew multi4"
-   ["transfer multi4 Alice 8.0" "transfer multi4 George 2.0"]
+    ["Alice:7.84" "Pam:1.96"]
   (test.delegated-bonding.renew-multibond "multi4"))
 (expect "renew events multi4 just 1 activity fee"
    [{"name": "test.pool.ROTATE","params": ["multi4:2021-03-18"]}
@@ -473,8 +479,9 @@
     {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi4:2021-03-18" 10.0]}
     {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi4" 10000.0 30 1]}
     {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232978.3]}
-    {"name": "coin.TRANSFER","params": ["multi4" "Alice" 8.0]}
-    {"name": "coin.TRANSFER","params": ["multi4" "George" 2.0]}]
+    {"name": "coin.TRANSFER","params": ["multi4" "George" 0.2]}
+    {"name": "coin.TRANSFER","params": ["multi4" "Alice" 7.84]}
+    {"name": "coin.TRANSFER","params": ["multi4" "Pam" 1.96]}]
    (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
@@ -496,7 +503,7 @@
                             (test.pool.ROTATE "multi5:2021-03-18")]}])
 
 (expect "renew multi5"
-   ["transfer multi5 Alice 4.0" "transfer multi5 George 1.0"]
+   ["Alice:3.92" "Pam:0.98"]
   (test.delegated-bonding.renew-multibond "multi5"))
 (expect "renew events multi5 just 1 activity fee"
  [{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
@@ -505,12 +512,13 @@
   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
-  {"name": "coin.TRANSFER","params": ["multi5" "Alice" 4.0]}
-  {"name": "coin.TRANSFER","params": ["multi5" "George" 1.0]}]
+  {"name": "coin.TRANSFER","params": ["multi5" "George" 0.1]}
+  {"name": "coin.TRANSFER","params": ["multi5" "Alice" 3.92]}
+  {"name": "coin.TRANSFER","params": ["multi5" "Pam" 0.98]}]
  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
-(coin.get-balance 'multi2)
+(coin.get-balance 'multi5)
 (coin.get-balance 'George)
 (coin.get-balance 'Pam)
 (coin.get-balance 'Alice)
@@ -539,7 +547,7 @@
   [ {'key: "george",'caps: [(test.pool.BONDER "multi1:2021-03-17")]}])
 
 (expect "unbond multi1"
- ["transfer multi1 Alice 8000.0" "transfer multi1 George 2000.0"]
+ ["Alice:8000.0" "Pam:2000.0"]
  (test.delegated-bonding.unbond "multi1"))
 
 (coin.get-balance 'multi1)
