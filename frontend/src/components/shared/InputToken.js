@@ -16,14 +16,14 @@ const Container = styled.div`
   max-height: 22px;
   padding: 15px !important;
   border-radius: 2rem;
-  background: #e6e6e6;
+  background: #ededed;
   gap: 5px;
 
   :hover {
-    background: #d6d6d6;
+    background: #e6e6e6;
   }
   :active {
-    background: #b1b1b1;
+    background: #d6d6d6;
   }
 
   min-width: ${({ theme: { inputTokenWidth } }) => `${inputTokenWidth}px`};

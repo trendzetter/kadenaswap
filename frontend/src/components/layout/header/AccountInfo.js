@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components/macro';
 import { reduceBalance } from '../../../utils/reduceBalance';
 import reduceToken from '../../../utils/reduceToken';
+import "../../../styles/inputoverride.css"
 
 const Container = styled.div`
   display: flex;
@@ -12,31 +13,11 @@ const Container = styled.div`
   }
 `;
 
-const BalanceContainer = styled.div`
-  padding: 10px 21px;
-  background: rgba(205, 205, 205, 0.5);
-  font-family: 'neue-bold';
-  font-size: 14px;
-  color: white;
-  border-radius: 7px;
-`;
-
-const AccountContainer = styled.div`
-  padding: 10px 21px;
-  background: white;
-  font-family: 'neue-bold';
-  font-size: 14px;
-  color: ${({ theme: { colors } }) => colors.pink};
-  border-radius: 7px;
-  margin-left: -10px;
-  z-index: 2;
-`;
-
 const CoinInfo = ({ account, balance, onClick }) => {
   return (
     <Container onClick={onClick}>
-      <BalanceContainer>{balance}</BalanceContainer>
-      <AccountContainer>{account}</AccountContainer>
+      <div className="balance-container">{balance}</div>
+      <div className="account-container">{account}</div>
     </Container>
   );
 };

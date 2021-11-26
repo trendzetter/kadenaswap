@@ -1,5 +1,6 @@
 .ui.input>input, .ui.purple.message, .ui.menu {
     border-radius: 5rem;
+    box-shadow: none;
 }
 
 .ui.message {
@@ -13,4 +14,127 @@
 .ui.input>input:focus {
     border-color: #c56cf0;
     background: #fff;
+}
+
+.ui.button:hover {
+  background-color: #b063d4 !important;
+}
+.ui.button:active {
+  background-color: #9150af !important;
+}
+
+
+.ui.input > input,
+.ui.purple.message,
+.ui.menu {
+  border-radius: 5rem;
+}
+
+.ui.message {
+  border-radius: 1.5rem;
+}
+
+.ui.input > input:focus {
+  border-color: #2a2a2a71;
+}
+
+.content {
+  color: #1f1f1f;
+  border-radius: 4rem;
+  max-width: 40rem;
+}
+
+.ui.modal {
+  width: 39rem;
+  border-radius: 2rem !important;
+}
+
+.ui.modal > .content {
+  border-radius: 2rem !important;
+}
+
+.account-details-box {
+  background-color: #c46cf05b;
+  padding: 1rem;
+  width: 100%;
+  border-radius: 1.4rem;
+  overflow-wrap: anywhere;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.account-button-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  align-content: center;
+  margin-top: 1rem;
+}
+
+.wallet-button {
+  background-color: #c46cf05b;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.wallet-button:hover {
+  background-color: #c56cf026;
+}
+
+.wallet-button:active {
+  background-color: #c46cf050;
+}
+
+.account-grid {
+  display: grid;
+  grid-gap: 1rem;
+}
+
+.account-button-grid {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 1rem;
+}
+
+
+.sub-button {
+  background-color: #c46cf05b;
+  color: #000;
+  padding: 10px 50px;
+  border-radius: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+}
+.sub-button:hover {
+  background-color: #c46cf050;
+}
+.sub-button:active {
+  background-color: #c46cf07e;
+}
+
+.balance-container {
+  padding: 10px 60px 10px 20px;
+  background: rgba(255, 255, 255, 0.233);
+  font-size: 1rem;
+  color: white;
+  border-radius: 2rem;
+}
+
+.account-container {
+  padding: 10px 20px;
+  background: rgb(197 108 240);
+  font-size: 1rem;
+  border-radius: 2rem;
+  margin-left: -50px;
+  z-index: 2;
+  display: grid;
+  place-content: center;
 }
