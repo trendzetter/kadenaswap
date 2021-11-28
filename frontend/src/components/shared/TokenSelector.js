@@ -65,7 +65,7 @@ const TokenSelector = ({ show, selectedToken, onTokenClick, onClose, fromToken, 
   const pact = useContext(PactContext);
 
   return (
-    <Transition items={show} from={{ opacity: 0 }} enter={{ opacity: 1 }} leave={{ opacity: 0 }}>
+    <Transition config={{ duration: 10 }} items={show} from={{ opacity: 0 }} enter={{ opacity: 1 }} leave={{ opacity: 0 }}>
       {(show) =>
         show &&
         ((props) => (
