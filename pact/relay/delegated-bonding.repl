@@ -46,6 +46,9 @@
   "Slot multi1 added"
   (test.delegated-bonding.new-slot 'multi1 10000.0 'George (read-keyset 'George) 2.0))
 
+(test.delegated-bonding.get-slot 'multi1)
+
+
 (expect "new-slot: success multi2"
     "Slot multi2 added"
   (test.delegated-bonding.new-slot 'multi2 10000.0 'George (read-keyset 'George) 3.0))
@@ -391,6 +394,7 @@
 (expect-failure "renew Alice 2: too soon"
   "Bond still active"
   (test.delegated-bonding.renew-multibond 'multi2))
+
 (commit-tx)
 
 
@@ -400,6 +404,16 @@
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")
                             (test.pool.ROTATE "multi2:2021-03-18")]}])
+
+; Try error renew directly on the pool
+(expect-failure
+  'delegated-bonding-admin
+(test.pool.renew "multi2:2021-03-18"))
+
+; Try unbond directly on the pool
+(expect-failure
+  'delegated-bonding-admin
+(test.pool.unbond "multi2:2021-03-18") )
 
 (expect "renew multi2"
    ["Alice:1.94" "Pam:2.91"]

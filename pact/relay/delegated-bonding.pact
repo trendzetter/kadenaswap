@@ -4,10 +4,10 @@
 
   @doc " slots for shared bonds"
   @model
-  [ (defproperty valid-account-id (accountId:string)
+  [ (defproperty valid-account-id (account-id:string)
       (and
-        (>= (length accountId) 3)
-        (<= (length accountId) 256))) ]
+        (>= (length account-id) 3)
+        (<= (length account-id) 256))) ]
 
   (defcap GOVERNANCE ()
     (enforce-guard (keyset-ref-guard 'delegated-bonding-admin))
@@ -15,9 +15,15 @@
 
   (defcap RESERVE
    ( account:string
-     amount:decimal)
+     size:decimal)
    @doc "Reserve event for tranche reservation"
    @event true
+  )
+
+  (defcap TRANCHE_GUARD
+    ( tranche-id:string )
+    @doc " Look up the guard for an account, required to debit from that account. "
+    (enforce-guard (at 'guard (read tranches tranche-id ['guard])))
   )
 
   (defconst POOL 'kda-relay-pool)
@@ -27,14 +33,14 @@
   (defschema tranche
     account:string     ;; account paying the tranche and receiving the rewards
     slot:string        ;; KDA account for the full bond
-    amount:decimal     ;; tranche amount
+    size:decimal     ;; tranche amount
     guard:guard        ;; keyset operator for running app
     status:string      ;; current status of the tranche
   )
 
   (defschema slot
     ;; key:  accountname for the autonomous controlled account
-    amount:decimal     ;; total and max amount
+    size:decimal     ;; total and max amount
     operator:guard     ;; keyset that will operator the app
     operator-account:string
     fee:decimal        ;; percentage operator fee
@@ -70,71 +76,80 @@
 
   (defun new-slot:string
     ( account:string
-      amount:decimal
+      size:decimal
       operator-account:string
       operator:guard
       fee:decimal
     )
     ;; check valid-account
-    (insert slots account { 'amount: amount, 'operator-account: operator-account, 'operator: operator, 'fee: fee, 'bondId: "" })
+    (insert slots account { 'size: size, 'operator-account: operator-account, 'operator: operator, 'fee: fee, 'bondId: "" })
     (coin.create-account account (create-module-guard 'reservations))
     (format "Slot {} added" [account])
   )
 
-  (defun get-slot-tranche-amounts
+  (defun get-slot-tranche-sizes
   (slot:string)
-  @doc " Return trache amounts for slot "
-  (select tranches [ 'amount ] (where 'slot (= slot))))
-; todo: get-remaining-amount
-  (defun get-slot-total-amount:decimal
+  @doc " Return trache sizes for slot "
+  (select tranches [ 'size ] (where 'slot (= slot))))
+; todo: get-remaining-size
+  (defun get-slot-total-size:decimal
   (slot:string)
-  @doc " Return to total amount of tranches "
-    (fold (+) 0.0 (map (at 'amount) (get-slot-tranche-amounts slot) ) )
+  @doc " Return to total size of tranches "
+    (fold (+) 0.0 (map (at 'size) (get-slot-tranche-sizes slot) ) )
   )
 
-  (defun get-slot-amount:decimal
+  (defun get-slot: {slot}
     (slot:string)
-    @doc " Return the slot maximum amount "
-    (at 'amount (read slots slot ['amount]))
-    )
+    @doc " returns the requested slot "
+    (with-read slots slot
+      { 'size := size,     ;; total and max amount
+        'operator := operator,     ;; keyset that will operator the app
+        'operator-account := operator-account,
+        'fee := fee,        ;; percentage operator fee
+        'bondId := bondId }
+  ;; return slot
+      (format "{} {} {} {} {}" [size operator operator-account fee bondId])
+    ))
 
   (defun new-tranche:string
     ( account:string
       slot:string
-      amount:decimal
+      size:decimal
       guard:guard
     )
     @doc " Prepare a new tranche and transfer the funds to the shared account "
     @model [ (property (valid-account-id account))]
-  (with-capability (RESERVE account amount) 1
-  (let ((total (get-slot-total-amount slot)))
+  (with-capability (RESERVE account size) 1
+  (let ((total (get-slot-total-size slot)))
     (with-read slots slot
-      {'amount := maximum,
+      {'size := maximum,
        'operator-account := operatoraccount }
       (enforce (!= account operatoraccount)
        "Operator account cannot join the bond" )
-      (enforce (>= maximum (+ amount total))
-       "Tranche cannot be bigger than the remaining amount for the slot" )
+      (enforce (>= maximum (+ size total))
+       "Tranche cannot be bigger than the remaining size for the slot" )
       (let ((id: string (format "{}:{}" [slot account])))
         (insert tranches id {
             'account: account,
             'slot: slot,
-            'amount: amount,
+            'size: size,
             'guard: guard,
             'status: "NEW"
             })
-        (coin.transfer account slot amount)
+        (coin.transfer account slot size)
         (format "{}" [id]))))))
 
   (defun get-slot-tranches
   (slot:string)
-  @doc " Return trache amounts for slot "
-  (select tranches [ 'account, 'slot, 'amount, 'guard, 'status ] (where 'slot (= slot))))
+  @doc " Return trache sizes for slot "
+  (select tranches [ 'account, 'slot, 'size, 'guard, 'status ] (where 'slot (= slot))))
 
   (defun new-multibond:string
     ( slot:string )  ;; KDA account for multi/multi ID
+    (with-read slots slot
+      {'size := size}
     (let ((multi {
-      'size: (get-slot-amount slot),
+      'size: size,
       'tranches: (get-slot-tranches slot)
       }))
       ;; store the multi
@@ -144,13 +159,14 @@
         (coin.TRANSFER slot 'relay-bank (at 'size multi)))
 
         ;; create the bond
-        (let ((bondId: string (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))))
+      (let ((bondId: string (test.pool.new-bond "kda-relay-pool" slot (create-module-guard "multibond"))))
       (update slots slot {
         'bondId: bondId
         })
 
-        (rotate slot)
-        (format "{}" [bondId]))))
+      ;; Rotate operation to the operator
+      (rotate slot)
+      (format "{}" [bondId])))))
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
@@ -162,7 +178,7 @@
       (test.pool.rotate bondId (create-module-guard 'multibond))
       (install-capability (test.pool.BONDER bondId))
       (test.pool.renew (at 'bondId slot))
-      ;; compute new amount
+      ;; compute new size
       (let* ( (amount (- (coin.get-balance account) old-balance))
              (operator-fee (* (/ amount 100) (at 'fee slot)))
              (rewards (- amount operator-fee))
@@ -186,6 +202,15 @@
       (test.pool.rotate bondId operator)
       (format "operator:{}" [operator])))
 
+  ; wrapping this call allows for reselling the tranches
+  (defun rotate-tranche
+    (trache-id:string
+     new-guard:guard )
+    (require-capability (TRANCHE_GUARD trache-id))
+    (update tranches trache-id {'guard: new-guard})
+    )
+
+; TODO let tranche holders unbond if the operator didn't renew
 
   (defun unbond
     (slot:string)
@@ -208,7 +233,7 @@
     )
     (let ( (to (at 'account tranche))
            ;; compute tranche amount
-           (tranche-amount (* amount (/ (at 'amount tranche) size))) )
+           (tranche-amount (* amount (/ (at 'size tranche) size))) )
        (install-capability
          (coin.TRANSFER account to tranche-amount))
        (coin.transfer account to tranche-amount)
