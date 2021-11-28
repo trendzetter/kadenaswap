@@ -77,7 +77,7 @@ export default function Account(props) {
       <div className="content">
         <div className="account-grid">
           <div>
-            <span className="medium-text">Connect to a wallet (Chain 1)</span>
+            <span className="medium-text">Connect to a wallet (Chain 3)</span>
           </div>
           <div>
             <Input
@@ -135,7 +135,7 @@ export default function Account(props) {
           ) : (
             <div>
               <span className="medium-text">
-                Account Does Not Exist (Send KDA to Chain 1)
+                Account Does Not Exist (Send KDA to Chain 3)
               </span>
             </div>
           )}
