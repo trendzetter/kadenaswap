@@ -564,6 +564,7 @@
  ["Alice:8000.0" "Pam:2000.0"]
  (test.delegated-bonding.unbond "multi1"))
 
+
 (coin.get-balance 'multi1)
 (coin.get-balance 'George)
 (coin.get-balance 'Pam)

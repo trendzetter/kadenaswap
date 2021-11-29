@@ -204,13 +204,19 @@
 
   ; wrapping this call allows for reselling the tranches
   (defun rotate-tranche
-    (trache-id:string
+    (tranche-id:string
      new-guard:guard )
-    (require-capability (TRANCHE_GUARD trache-id))
-    (update tranches trache-id {'guard: new-guard})
+    (require-capability (TRANCHE_GUARD tranche-id))
+    (update tranches tranche-id {'guard: new-guard})
     )
 
-; TODO let tranche holders unbond if the operator didn't renew
+  (defun update-tranche-account
+    (tranche-id:string
+     account:string )
+     (require-capability (TRANCHE_GUARD tranche-id))
+     (update tranches tranche-id {'account: account}))
+
+; idea: vote to unbond. If 60% of the tranches want to unbond the operator cannot renew
 
   (defun unbond
     (slot:string)
