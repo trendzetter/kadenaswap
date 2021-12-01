@@ -8,8 +8,14 @@
      , 'lockup: 30
      , 'unlock: 20
      , 'bond: 10000
-     , 'upgrade: true})
+     , 'upgrade: false})
 
+     (begin-tx)
+     ;(define-keyset 'delegated-bonding-admin)
+     ;(env-keys ['admin])
+     ; Load the module into the namespace test
+     (load "delegated-bonding.pact")
+     (commit-tx)
 
 (begin-tx)
 (test-capability (coin.COINBASE))
@@ -23,12 +29,6 @@
 (test.pool.fund-reserve test.relay.POOL "Admin" 200000.0)
 (commit-tx)
 
-(begin-tx)
-(define-keyset 'delegated-bonding-admin)
-(env-keys ['admin])
-; Load the module into the namespace test
-(load "delegated-bonding.pact")
-(commit-tx)
 
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-17")})
 (begin-tx)
@@ -95,6 +95,7 @@
 (commit-tx)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi1)]}])
 (expect "Multi1 activated"
   "multi1:2021-03-17"
 (test.delegated-bonding.new-multibond 'multi1) )
@@ -124,6 +125,7 @@
 
 (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-18")})
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi2)]}])
 (expect "Multi2 activated"
   "multi2:2021-03-18"
 (test.delegated-bonding.new-multibond 'multi2) )
@@ -144,6 +146,7 @@
 (commit-tx)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi3)]}])
 (expect "Multi3 activated"
   "multi3:2021-03-18"
 (test.delegated-bonding.new-multibond 'multi3) )
@@ -162,6 +165,7 @@
 (test.delegated-bonding.new-tranche "Pam" "multi4" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi4)]}])
 (expect "Multi4 activated"
   "multi4:2021-03-18"
 (test.delegated-bonding.new-multibond 'multi4) )
@@ -181,6 +185,7 @@
 (commit-tx)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi5)]}])
 (expect "Multi5 activated"
   "multi5:2021-03-18"
 (test.delegated-bonding.new-multibond 'multi5) )
@@ -199,6 +204,7 @@
 (test.delegated-bonding.new-tranche "Pam" "multi6" 2000.0 (read-keyset "Pam")))
 (commit-tx)
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi6)]}])
 (expect "Multi6 activated"
   "multi6:2021-03-18"
 (test.delegated-bonding.new-multibond 'multi6) )
@@ -438,6 +444,7 @@
 ; during renewal the control was rotated to the contract
 ; rotate the bond back to the operator
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi2)]}])
 (expect "rotate multi2"
    "operator:KeySet {keys: [george],pred: keys-all}"
   (test.delegated-bonding.rotate "multi2"))
@@ -448,7 +455,6 @@
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi3:2021-03-18")
                             (test.pool.ROTATE "multi3:2021-03-18")]}])
-
 ;(expect "renew multi3"
 ;   ["transfer multi3 Alice 8.0" "transfer multi3 George 2.0"]
 ; TRANSFER exceeded for balance 0.0!!!	TODO: ENFORCE OPERATOR CANNOT BOND
@@ -472,6 +478,7 @@
 (coin.get-balance 'Alice)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi3)]}])
 (expect "rotate multi3"
    "operator:KeySet {keys: [george],pred: keys-all}"
   (test.delegated-bonding.rotate "multi3"))
@@ -505,6 +512,7 @@
 (coin.get-balance 'Alice)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi4)]}])
 (expect "rotate multi4"
    "operator:KeySet {keys: [george],pred: keys-all}"
   (test.delegated-bonding.rotate "multi4"))
@@ -538,6 +546,8 @@
 (coin.get-balance 'Alice)
 
 (begin-tx)
+
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi5)]}])
 (expect "rotate multi5"
    "operator:KeySet {keys: [george],pred: keys-all}"
   (test.delegated-bonding.rotate "multi5"))
@@ -550,6 +560,7 @@
 (coin.get-balance 'Alice)
 
 (begin-tx)
+(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi6)]}])
 (expect "rotate multi6"
    "operator:KeySet {keys: [george],pred: keys-all}"
   (test.delegated-bonding.rotate "multi6"))

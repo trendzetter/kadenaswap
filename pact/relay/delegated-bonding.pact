@@ -22,8 +22,12 @@
 
   (defcap TRANCHE_GUARD
     ( tranche-id:string )
-    @doc " Look up the guard for an account, required to debit from that account. "
     (enforce-guard (at 'guard (read tranches tranche-id ['guard])))
+  )
+
+  (defcap OPERATOR
+    ( slot:string )
+    (enforce-guard (at 'operator (read slots slot ['operator])))
   )
 
   (defconst POOL 'kda-relay-pool)
@@ -82,6 +86,7 @@
       fee:decimal
     )
     ;; check valid-account
+    @model [ (property (valid-account-id account)), (property (valid-account-id operator-account))]
     (insert slots account { 'size: size, 'operator-account: operator-account, 'operator: operator, 'fee: fee, 'bondId: "" })
     (coin.create-account account (create-module-guard 'reservations))
     (format "Slot {} added" [account])
@@ -146,6 +151,7 @@
 
   (defun new-multibond:string
     ( slot:string )  ;; KDA account for multi/multi ID
+    (with-capability (OPERATOR slot) 1
     (with-read slots slot
       {'size := size}
     (let ((multi {
@@ -166,7 +172,7 @@
 
       ;; Rotate operation to the operator
       (rotate slot)
-      (format "{}" [bondId])))))
+      (format "{}" [bondId]))))))
 
   (defun renew-multibond:string (account:string)
     ;; track the old balance
@@ -189,32 +195,34 @@
         (map
           (allocate account rewards (at 'size multi)) (at 'tranches multi)))
       ;; ISSUe: capability already fired
-      ; (rotate account)
+      ; (rotate account) should be exectuted manually
       ))
 
 
   (defun rotate
     ( slot:string)
+    (with-capability (OPERATOR slot) 1
     (with-read slots slot
       { 'operator := operator,
         'bondId := bondId }
       (install-capability (test.pool.ROTATE bondId))
       (test.pool.rotate bondId operator)
-      (format "operator:{}" [operator])))
+      (format "operator:{}" [operator]))))
 
   ; wrapping this call allows for reselling the tranches
   (defun rotate-tranche
     (tranche-id:string
      new-guard:guard )
-    (require-capability (TRANCHE_GUARD tranche-id))
-    (update tranches tranche-id {'guard: new-guard})
+    (with-capability (TRANCHE_GUARD tranche-id) 1
+      (update tranches tranche-id {'guard: new-guard}))
     )
 
   (defun update-tranche-account
     (tranche-id:string
      account:string )
-     (require-capability (TRANCHE_GUARD tranche-id))
-     (update tranches tranche-id {'account: account}))
+     @model [ (property (valid-account-id account))]
+     (with-capability (TRANCHE_GUARD tranche-id) 1
+       (update tranches tranche-id {'account: account})))
 
 ; idea: vote to unbond. If 60% of the tranches want to unbond the operator cannot renew
 
@@ -247,6 +255,8 @@
   )
 )
 
-(create-table slots)
-(create-table tranches)
-(create-table multis)
+(if (read-msg 'upgrade)
+  ["upgrade"]
+  [ (create-table slots)
+    (create-table tranches)
+    (create-table multis) ])
