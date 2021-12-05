@@ -1,4 +1,3 @@
-
 (load "relay.repl")
 (namespace 'test)
 (env-data
@@ -519,25 +518,42 @@
 (commit-tx)
 
 ; RENEW multi5
+; (begin-tx)
+; (env-sigs
+;   [ {'key: "george",'caps: [(test.pool.BONDER "multi5:2021-03-18")
+;                             (test.pool.ROTATE "multi5:2021-03-18")]}])
+;
+; (expect "renew multi5"
+;    ["Alice:3.92" "Pam:0.98"]
+;   (test.delegated-bonding.renew-multibond "multi5"))
+; (expect "renew events multi5 just 1 activity fee"
+;  [{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
+;   {"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
+;   {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 5.0]}
+;   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
+;   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
+;   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
+;   {"name": "coin.TRANSFER","params": ["multi5" "George" 0.1]}
+;   {"name": "coin.TRANSFER","params": ["multi5" "Alice" 3.92]}
+;   {"name": "coin.TRANSFER","params": ["multi5" "Pam" 0.98]}]
+;  (map (remove 'module-hash) (env-events true)))
+; (commit-tx)
 (begin-tx)
-(env-sigs
-  [ {'key: "george",'caps: [(test.pool.BONDER "multi5:2021-03-18")
-                            (test.pool.ROTATE "multi5:2021-03-18")]}])
-
-(expect "renew multi5"
-   ["Alice:3.92" "Pam:0.98"]
-  (test.delegated-bonding.renew-multibond "multi5"))
-(expect "renew events multi5 just 1 activity fee"
- [{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
-  {"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
-  {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 5.0]}
-  {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
-  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
-  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
-  {"name": "coin.TRANSFER","params": ["multi5" "George" 0.1]}
-  {"name": "coin.TRANSFER","params": ["multi5" "Alice" 3.92]}
-  {"name": "coin.TRANSFER","params": ["multi5" "Pam" 0.98]}]
- (map (remove 'module-hash) (env-events true)))
+(env-chain-data { 'block-time: (parse-time "%F" "2021-05-08")})
+(env-sigs [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR 'multi5), (test.pool.BONDER "multi5:2021-03-18")]}])
+(expect "unbond multi1"
+ ["Alice:8003.92" "Pam:2000.98"]
+(test.delegated-bonding.unbond 'multi5))
+(expect "unbond events multi5"
+   [{"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
+    {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 10005.0]}
+    {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
+    {"name": "test.pool.UNBOND","params": ["kda-relay-pool" "multi5:2021-03-18" 10000.0]}
+    {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 150000.0 232973.3]}
+    {"name": "coin.TRANSFER","params": ["multi5" "George" 0.1]}
+    {"name": "coin.TRANSFER","params": ["multi5" "Alice" 8003.92]}
+    {"name": "coin.TRANSFER","params": ["multi5" "Pam" 2000.98]}]
+  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
 (coin.get-balance 'multi5)
@@ -569,11 +585,36 @@
 ; stop multi1 (also cannot renew because no activity!!)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
 (env-sigs
-  [ {'key: "george",'caps: [(test.pool.BONDER "multi1:2021-03-17")]}])
-
+  [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR "multi1"), (test.pool.BONDER "multi1:2021-03-17")]}])
 (expect "unbond multi1"
  ["Alice:8000.0" "Pam:2000.0"]
  (test.delegated-bonding.unbond "multi1"))
+(expect "unbond events multi1"
+   [{"name": "test.pool.BONDER","params": ["multi1:2021-03-17"]}
+    {"name": "coin.TRANSFER","params": ["relay-bank" "multi1" 10000.0]}
+    {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi1:2021-03-17" 0.0]}
+    {"name": "test.pool.UNBOND","params": ["kda-relay-pool" "multi1:2021-03-17" 10000.0]}
+    {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 140000.0 232973.3]}
+    {"name": "coin.TRANSFER","params": ["multi1" "Alice" 8000.0]}
+    {"name": "coin.TRANSFER","params": ["multi1" "Pam" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
+
+(env-chain-data { 'block-time: (parse-time "%F" "2021-05-08")})
+(env-sigs
+  [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR "multi6"), (test.pool.BONDER "multi6:2021-03-18")]}])
+
+(expect "unbond multi6"
+ ["Alice:8000.0" "Pam:2000.0"]
+ (test.delegated-bonding.unbond "multi6"))
+(expect "unbond events multi6"
+   [{"name": "test.pool.BONDER","params": ["multi6:2021-03-18"]}
+    {"name": "coin.TRANSFER","params": ["relay-bank" "multi6" 10000.0]}
+    {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi6:2021-03-18" 0.0]}
+    {"name": "test.pool.UNBOND","params": ["kda-relay-pool" "multi6:2021-03-18" 10000.0]}
+    {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 130000.0 232973.3]}
+    {"name": "coin.TRANSFER","params": ["multi6" "Alice" 8000.0]}
+    {"name": "coin.TRANSFER","params": ["multi6" "Pam" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
 
 
 (coin.get-balance 'multi1)

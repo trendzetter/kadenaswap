@@ -1,7 +1,6 @@
 (namespace (read-msg 'ns))
 
 (module delegated-bonding GOVERNANCE
-
   @doc " slots for shared bonds"
   @model
   [ (defproperty valid-account-id (account-id:string)
@@ -228,16 +227,32 @@
 
   (defun unbond
     (slot:string)
+    (with-capability (OPERATOR slot) 1
     (with-read slots slot
-      { 'bondId := bondId }
+      { 'bondId := bondId,
+        'size := size,
+        'fee := operator-fee,
+        'operator-account := operator-account,
+        'operator := operator-guard }
       (let* ( (old-balance (coin.get-balance slot))
               (multi (read multis slot)))
         (test.pool.unbond bondId)
-        (let ( (amount (- (coin.get-balance slot) old-balance)) )
+        (let* ( (amount (- (coin.get-balance slot) old-balance))
+                (fees (- amount size))
+                (operator-fee (* (/ fees 100) operator-fee))
+                (rewards (- amount operator-fee)) )
           ;; allocate
+          (if (> operator-fee 0.0)
+            (let ((msg "pay operator"))
+              (install-capability (coin.TRANSFER slot operator-account operator-fee))
+              (coin.transfer-create slot operator-account operator-guard operator-fee)
+              (format "{}:{}" [operator-account operator-fee])
+            )
+            "No operator payment"
+          )
           (map
-            (allocate slot amount (at 'size multi)) (at 'tranches multi)))
-        )))
+            (allocate slot (- amount operator-fee) (at 'size multi)) (at 'tranches multi)))
+        ))))
 
   (defun allocate
     ( account:string           ;; multi account
