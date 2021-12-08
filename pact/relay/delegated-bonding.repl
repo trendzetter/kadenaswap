@@ -393,8 +393,7 @@
 
 ; renew too soon
 (env-sigs
-  [ {'key: "george",'caps: [(test.relay.BONDER "multi2:2021-03-18")
-                            (test.pool.ROTATE "multi2:2021-03-18")]}])
+  [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")]}])
 
 (expect-failure "renew Alice 2: too soon"
   "Bond still active"
@@ -408,12 +407,7 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi2:2021-03-18")
-                            (test.pool.ROTATE "multi2:2021-03-18")]}])
-
-; Try error renew directly on the pool
-(expect-failure
-  'delegated-bonding-admin
-(test.pool.renew "multi2:2021-03-18"))
+                            (test.delegated-bonding.OPERATOR "multi2") ]}])
 
 ; Try unbond directly on the pool
 (expect-failure
@@ -424,15 +418,14 @@
    ["Alice:1.94" "Pam:2.91"]
   (test.delegated-bonding.renew-multibond "multi2"))
 (expect "renew events multi2 just activity fee"
- [{"name": "test.pool.ROTATE","params": ["multi2:2021-03-18"]}
-  {"name": "test.pool.BONDER","params": ["multi2:2021-03-18"]}
-  {"name": "coin.TRANSFER","params": ["relay-bank" "multi2" 5.0]}
-  {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi2:2021-03-18" 5.0]}
-  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi2" 10000.0 30 1]}
-  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232998.3]}
-  {"name": "coin.TRANSFER","params": ["multi2" "George" 0.15]}
-  {"name": "coin.TRANSFER","params": ["multi2" "Alice" 1.94]}
-  {"name": "coin.TRANSFER","params": ["multi2" "Pam" 2.91]}]
+  [{"name": "test.pool.BONDER","params": ["multi2:2021-03-18"]}
+   {"name": "coin.TRANSFER","params": ["relay-bank" "multi2" 5.0]}
+   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi2:2021-03-18" 5.0]}
+   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi2" 10000.0 30 1]}
+   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232998.3]}
+   {"name": "coin.TRANSFER","params": ["multi2" "George" 0.15]}
+   {"name": "coin.TRANSFER","params": ["multi2" "Alice" 1.94]}
+   {"name": "coin.TRANSFER","params": ["multi2" "Pam" 2.91]}]
  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 (coin.get-balance 'multi2)
@@ -453,21 +446,17 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi3:2021-03-18")
-                            (test.pool.ROTATE "multi3:2021-03-18")]}])
-;(expect "renew multi3"
-;   ["transfer multi3 Alice 8.0" "transfer multi3 George 2.0"]
-; TRANSFER exceeded for balance 0.0!!!	TODO: ENFORCE OPERATOR CANNOT BOND
+                            (test.delegated-bonding.OPERATOR "multi3") ]}])
 (test.delegated-bonding.renew-multibond "multi3");)
 (expect "renew events multi3 just 1 activity fee"
- [{"name": "test.pool.ROTATE","params": ["multi3:2021-03-18"]}
-  {"name": "test.pool.BONDER","params": ["multi3:2021-03-18"]}
-  {"name": "coin.TRANSFER","params": ["relay-bank" "multi3" 10.0]}
-  {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi3:2021-03-18" 10.0]}
-  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi3" 10000.0 30 1]}
-  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232988.3]}
-  {"name": "coin.TRANSFER","params": ["multi3" "George" 0.2]}
-  {"name": "coin.TRANSFER","params": ["multi3" "Alice" 7.84]}
-  {"name": "coin.TRANSFER","params": ["multi3" "Pam" 1.96]}]
+  [{"name": "test.pool.BONDER","params": ["multi3:2021-03-18"]}
+   {"name": "coin.TRANSFER","params": ["relay-bank" "multi3" 10.0]}
+   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi3:2021-03-18" 10.0]}
+   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi3" 10000.0 30 1]}
+   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232988.3]}
+   {"name": "coin.TRANSFER","params": ["multi3" "George" 0.2]}
+   {"name": "coin.TRANSFER","params": ["multi3" "Alice" 7.84]}
+   {"name": "coin.TRANSFER","params": ["multi3" "Pam" 1.96]}]
  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
@@ -487,14 +476,13 @@
 (begin-tx)
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi4:2021-03-18")
-                            (test.pool.ROTATE "multi4:2021-03-18")]}])
+                            (test.delegated-bonding.OPERATOR "multi4")]}])
 
 (expect "renew multi4"
     ["Alice:7.84" "Pam:1.96"]
   (test.delegated-bonding.renew-multibond "multi4"))
 (expect "renew events multi4 just 1 activity fee"
-   [{"name": "test.pool.ROTATE","params": ["multi4:2021-03-18"]}
-    {"name": "test.pool.BONDER","params": ["multi4:2021-03-18"]}
+   [{"name": "test.pool.BONDER","params": ["multi4:2021-03-18"]}
     {"name": "coin.TRANSFER","params": ["relay-bank" "multi4" 10.0]}
     {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi4:2021-03-18" 10.0]}
     {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi4" 10000.0 30 1]}

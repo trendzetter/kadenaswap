@@ -61,15 +61,6 @@
 
   (deftable slots:{slot})
 
-  (defun wrap-new-bond:string
-    ( pool:string      ;; Bond pool name
-      account:string   ;; KDA account
-      guard:guard      ;; bond administration guard
-    )
-    (test.pool.new-bond pool account (create-module-guard 'bond-wrapper))
-  )
-
-
   (defun get-all-slots ()
   @doc " Return all slots. "
   (format "{}:{}" [(map (read slots) (keys slots)) (keys slots)] ))
@@ -180,8 +171,6 @@
            (slot (read slots account))
            (bondId (at 'bondId slot)))
       ;; renew, will credit account
-      (test.pool.rotate bondId (create-module-guard 'multibond))
-      (install-capability (test.pool.BONDER bondId))
       (test.pool.renew (at 'bondId slot))
       ;; compute new size
       (let* ( (amount (- (coin.get-balance account) old-balance))
@@ -193,9 +182,7 @@
         (coin.transfer-create account operator-account (at 'operator slot) operator-fee)
         (map
           (allocate account rewards (at 'size multi)) (at 'tranches multi)))
-      ;; ISSUe: capability already fired
-      ; (rotate account) should be exectuted manually
-      ))
+    ))
 
 
   (defun rotate
@@ -243,10 +230,9 @@
                 (rewards (- amount operator-fee)) )
           ;; allocate
           (if (> operator-fee 0.0)
-            (let ((msg "pay operator"))
+            (let ((msg "p"))
               (install-capability (coin.TRANSFER slot operator-account operator-fee))
               (coin.transfer-create slot operator-account operator-guard operator-fee)
-              (format "{}:{}" [operator-account operator-fee])
             )
             "No operator payment"
           )
@@ -260,15 +246,14 @@
       size:decimal             ;; bond size
       tranche:object{tranche}  ;; tranche
     )
+    (with-capability (OPERATOR account) 1
     (let ( (to (at 'account tranche))
            ;; compute tranche amount
            (tranche-amount (* amount (/ (at 'size tranche) size))) )
        (install-capability
          (coin.TRANSFER account to tranche-amount))
        (coin.transfer account to tranche-amount)
-      (format "{}:{}" [to tranche-amount]))
-  )
-)
+      (format "{}:{}" [to tranche-amount]))) ))
 
 (if (read-msg 'upgrade)
   ["upgrade"]
