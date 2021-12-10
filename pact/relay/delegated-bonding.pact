@@ -82,10 +82,24 @@
     (format "Slot {} added" [account])
   )
 
+  (defun cancel-tranche
+    (tranche-id:string)
+    (with-capability (TRANCHE_GUARD tranche-id)
+    (with-read tranches tranche-id
+      { 'account := account,
+        'slot := slot,
+        'size := size
+        }
+        (update tranches tranche-id
+          {'status : 'CANCEL })
+        (install-capability (coin.TRANSFER slot account size))
+        (coin.transfer slot account size))))
+
   (defun get-slot-tranche-sizes
   (slot:string)
   @doc " Return trache sizes for slot "
-  (select tranches [ 'size ] (where 'slot (= slot))))
+  (filter (is-new) (select tranches [ 'size 'status ] (where 'slot (= slot)))))
+
 ; todo: get-remaining-size
   (defun get-slot-total-size:decimal
   (slot:string)
@@ -134,14 +148,18 @@
         (coin.transfer account slot size)
         (format "{}" [id]))))))
 
+  (defun is-new:bool
+    (o)
+    (= (at 'status o) 'NEW))
+
   (defun get-slot-tranches
   (slot:string)
   @doc " Return trache sizes for slot "
-  (select tranches [ 'account, 'slot, 'size, 'guard, 'status ] (where 'slot (= slot))))
+  (filter (is-new) (select tranches [ 'account, 'slot, 'size, 'guard, 'status ] (where 'slot (= slot)) )))
 
   (defun new-multibond:string
     ( slot:string )  ;; KDA account for multi/multi ID
-    (with-capability (OPERATOR slot) 1
+    (with-capability (OPERATOR slot)
     (with-read slots slot
       {'size := size}
     (let ((multi {
@@ -187,7 +205,7 @@
 
   (defun rotate
     ( slot:string)
-    (with-capability (OPERATOR slot) 1
+    (with-capability (OPERATOR slot)
     (with-read slots slot
       { 'operator := operator,
         'bondId := bondId }
@@ -199,7 +217,7 @@
   (defun rotate-tranche
     (tranche-id:string
      new-guard:guard )
-    (with-capability (TRANCHE_GUARD tranche-id) 1
+    (with-capability (TRANCHE_GUARD tranche-id)
       (update tranches tranche-id {'guard: new-guard}))
     )
 
@@ -207,14 +225,14 @@
     (tranche-id:string
      account:string )
      @model [ (property (valid-account-id account))]
-     (with-capability (TRANCHE_GUARD tranche-id) 1
+     (with-capability (TRANCHE_GUARD tranche-id)
        (update tranches tranche-id {'account: account})))
 
 ; idea: vote to unbond. If 60% of the tranches want to unbond the operator cannot renew
 
   (defun unbond
     (slot:string)
-    (with-capability (OPERATOR slot) 1
+    (with-capability (OPERATOR slot)
     (with-read slots slot
       { 'bondId := bondId,
         'size := size,

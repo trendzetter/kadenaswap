@@ -93,11 +93,28 @@
 (test.delegated-bonding.new-tranche "Pam" "multi1" 2000.0 (read-keyset "Pam"))
 (commit-tx)
 
+(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi1:Pam")] }])
+
+(test.delegated-bonding.get-slot-tranches 'multi1)
+
+(begin-tx)
+(test.delegated-bonding.cancel-tranche "multi1:Pam" )
+(commit-tx)
+
+(test.delegated-bonding.get-slot-tranches 'multi1)
+
+
 (begin-tx)
 (env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi1)]}])
 (expect "Multi1 activated"
   "multi1:2021-03-17"
 (test.delegated-bonding.new-multibond 'multi1) )
+(expect "events new bond multi1"
+ [{"name": "coin.TRANSFER","params": ["multi1" "relay-bank" 10000.0]}
+  {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi1" 10000.0 30 0]}
+  {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 110000.0 233003.3]}
+  {"name": "test.pool.ROTATE","params": ["multi1:2021-03-17"]}]
+(map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
 
