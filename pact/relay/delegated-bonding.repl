@@ -165,8 +165,8 @@
 (commit-tx)
 
 
-(begin-tx)
 ;; Multi3
+(begin-tx)
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi3" 8000.0)] }])
 (expect "new-tranche: success Alice"
     "multi3:Alice"
@@ -176,6 +176,22 @@
 (expect "new-tranche: success Pam"
     "multi3:Pam"
 (test.delegated-bonding.new-tranche "Pam" "multi3" 2000.0 (read-keyset "Pam")))
+(commit-tx)
+
+
+; test sale of tranche
+(begin-tx)
+(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi3:Pam")] }])
+(expect "new guard for multi3:Pam"
+  "Write succeeded"
+(test.delegated-bonding.rotate-tranche "multi3:Pam" (read-keyset 'Bob)))
+(commit-tx)
+
+(begin-tx)
+(env-sigs [{'key: "bob", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi3:Pam")] }])
+(expect "new acount for multi3:Pam"
+  "Write succeeded"
+(test.delegated-bonding.update-tranche-account "multi3:Pam" "Bob"))
 (commit-tx)
 
 (begin-tx)
@@ -497,7 +513,9 @@
 (env-sigs
   [ {'key: "george",'caps: [(test.pool.BONDER "multi3:2021-03-18")
                             (test.delegated-bonding.OPERATOR "multi3") ]}])
-(test.delegated-bonding.renew-multibond "multi3");)
+(expect "renew multi3"
+ ["Alice:7.84" "Bob:1.96"]
+(test.delegated-bonding.renew-multibond "multi3"))
 (expect "renew events multi3 just 1 activity fee"
   [{"name": "test.pool.BONDER","params": ["multi3:2021-03-18"]}
    {"name": "coin.TRANSFER","params": ["relay-bank" "multi3" 10.0]}
@@ -506,7 +524,7 @@
    {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232988.3]}
    {"name": "coin.TRANSFER","params": ["multi3" "George" 0.2]}
    {"name": "coin.TRANSFER","params": ["multi3" "Alice" 7.84]}
-   {"name": "coin.TRANSFER","params": ["multi3" "Pam" 1.96]}]
+   {"name": "coin.TRANSFER","params": ["multi3" "Bob" 1.96]}]
  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
