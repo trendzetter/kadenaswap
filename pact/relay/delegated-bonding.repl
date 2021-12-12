@@ -1,7 +1,7 @@
 (load "relay.repl")
 (namespace 'test)
 (env-data
-    {  'delegated-bonding-admin: ['admin], 'George: ['george], 'Alice: ['alice], 'Pam: ['pam], 'Admin: ['admin]
+    {  'delegated-bonding-admin: ['admin], 'George: ['george], 'Alice: ['alice], 'Pam: ['pam], 'Bob: ['bob], 'Admin: ['admin]
      , 'ns: 'test
      , 'relay-coin-account: 'delegated-bonding-bank
      , 'lockup: 30
@@ -21,6 +21,7 @@
 (coin.coinbase "George" (read-keyset 'George) 150000.0)
 (coin.coinbase "Alice" (read-keyset 'Alice) 150000.0)
 (coin.coinbase "Pam" (read-keyset 'Pam) 150000.0)
+(coin.coinbase "Bob" (read-keyset 'Bob) 150000.0)
 (coin.coinbase "Admin" (read-keyset 'Admin) 200000.0)
 
 (env-sigs
@@ -71,14 +72,16 @@
 (expect "new-slot: success multi6"
   "Slot multi6 added"
   (test.delegated-bonding.new-slot 'multi6 10000.0 'George (read-keyset 'George) 2.0))
-;(delegated-bonding.get-slot-amount 'multi1)
 
 ;; Multi1
 ; Test max amount for slot
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi1" 8000.0)] }])
-; (expect "new-tranche: success Alice"
-;     "multi1:Alice"
-(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice")); )
+(test.delegated-bonding.new-tranche "Alice" "multi1" 8000.0 (read-keyset "Alice"))
+(expect "events new tranche Alice 1"
+ [{"name": "test.delegated-bonding.RESERVE","params": ["Alice" 8000.0]}
+  {"name": "coin.TRANSFER","params": ["Alice" "multi1" 8000.0]}]
+(map (remove 'module-hash) (env-events true)))
+
 
 ; failures tests
 (env-sigs [{'key: "george", 'caps: [(coin.TRANSFER "George" "multi1" 3000.0)] }])
@@ -89,17 +92,42 @@
 (expect-failure "Operator account cannot join the bond"
   (test.delegated-bonding.new-tranche "George" "multi1" 2000.0 (read-keyset "George")))
 
+
 (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi1" 2000.0)] }])
 (test.delegated-bonding.new-tranche "Pam" "multi1" 2000.0 (read-keyset "Pam"))
+(expect "events new tranche Pam"
+   [{"name": "test.delegated-bonding.RESERVE","params": ["Pam" 2000.0]}
+    {"name": "coin.TRANSFER","params": ["Pam" "multi1" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
-(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi1:Pam")] }])
 
 (test.delegated-bonding.get-slot-tranches 'multi1)
 
 (begin-tx)
+(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi1:Pam")] }])
 (test.delegated-bonding.cancel-tranche "multi1:Pam" )
+(expect "events cancel tranche Pam"
+    [{"name": "coin.TRANSFER","params": ["multi1" "Pam" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
 (commit-tx)
+
+; try to cancel it twice
+(begin-tx)
+(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi1:Pam")] }])
+(expect-failure "Cannot cancel tranche more than once"
+(test.delegated-bonding.cancel-tranche "multi1:Pam" ))
+(commit-tx)
+
+(begin-tx)
+(env-sigs [{'key: "bob", 'caps: [(coin.TRANSFER "Bob" "multi1" 2000.0)] }])
+(test.delegated-bonding.new-tranche "Bob" "multi1" 2000.0 (read-keyset "Bob"))
+(expect "events new tranche Bob"
+    [{"name": "test.delegated-bonding.RESERVE","params": ["Bob" 2000.0]}
+     {"name": "coin.TRANSFER","params": ["Bob" "multi1" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
+(commit-tx)
+
 
 (test.delegated-bonding.get-slot-tranches 'multi1)
 
@@ -123,21 +151,10 @@
 (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 4000.0)] }])
 (test.delegated-bonding.new-tranche "Alice" "multi2" 4000.0 (read-keyset "Alice"))
 
+
 (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 6000.0)] }])
 (test.delegated-bonding.new-tranche "Pam" "multi2" 6000.0 (read-keyset "Pam"))
 (commit-tx)
-
-; (begin-tx)
-; (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
-; (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
-; (commit-tx)
-
-; (begin-tx)
-; (env-sigs [{'key: "pam", 'caps: [(coin.TRANSFER "Pam" "multi2" 2000.0)] }])
-; (test.delegated-bonding.new-tranche "Pam" "multi2" 2000.0 (read-keyset "Pam"))
-; (env-sigs [{'key: "alice", 'caps: [(coin.TRANSFER "Alice" "multi2" 2000.0)] }])
-; (test.delegated-bonding.new-tranche "Alice" "multi2" 2000.0 (read-keyset "Alice"))
-; (commit-tx)
 
 (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-03-18")})
@@ -180,6 +197,22 @@
     "multi4:Pam"
 (test.delegated-bonding.new-tranche "Pam" "multi4" 2000.0 (read-keyset "Pam")))
 (commit-tx)
+
+(begin-tx)
+(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi4:Pam")] }])
+(test.delegated-bonding.cancel-tranche "multi4:Pam" )
+(expect "events cancel tranche Pam"
+    [{"name": "coin.TRANSFER","params": ["multi4" "Pam" 2000.0]}]
+  (map (remove 'module-hash) (env-events true)))
+(commit-tx)
+
+(begin-tx)
+(env-sigs [{'key: "bob", 'caps: [(coin.TRANSFER "Bob" "multi4" 2000.0)] }])
+(expect "new-tranche: success Bob"
+    "multi4:Bob"
+(test.delegated-bonding.new-tranche "Bob" "multi4" 2000.0 (read-keyset "Bob")))
+(commit-tx)
+
 (begin-tx)
 (env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi4)]}])
 (expect "Multi4 activated"
@@ -496,7 +529,7 @@
                             (test.delegated-bonding.OPERATOR "multi4")]}])
 
 (expect "renew multi4"
-    ["Alice:7.84" "Pam:1.96"]
+    ["Alice:7.84" "Bob:1.96"]
   (test.delegated-bonding.renew-multibond "multi4"))
 (expect "renew events multi4 just 1 activity fee"
    [{"name": "test.pool.BONDER","params": ["multi4:2021-03-18"]}
@@ -506,7 +539,7 @@
     {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232978.3]}
     {"name": "coin.TRANSFER","params": ["multi4" "George" 0.2]}
     {"name": "coin.TRANSFER","params": ["multi4" "Alice" 7.84]}
-    {"name": "coin.TRANSFER","params": ["multi4" "Pam" 1.96]}]
+    {"name": "coin.TRANSFER","params": ["multi4" "Bob" 1.96]}]
    (map (remove 'module-hash) (env-events true)))
 (commit-tx)
 
@@ -522,27 +555,6 @@
   (test.delegated-bonding.rotate "multi4"))
 (commit-tx)
 
-; RENEW multi5
-; (begin-tx)
-; (env-sigs
-;   [ {'key: "george",'caps: [(test.pool.BONDER "multi5:2021-03-18")
-;                             (test.pool.ROTATE "multi5:2021-03-18")]}])
-;
-; (expect "renew multi5"
-;    ["Alice:3.92" "Pam:0.98"]
-;   (test.delegated-bonding.renew-multibond "multi5"))
-; (expect "renew events multi5 just 1 activity fee"
-;  [{"name": "test.pool.ROTATE","params": ["multi5:2021-03-18"]}
-;   {"name": "test.pool.BONDER","params": ["multi5:2021-03-18"]}
-;   {"name": "coin.TRANSFER","params": ["relay-bank" "multi5" 5.0]}
-;   {"name": "test.pool.FEE","params": ["kda-relay-pool" "multi5:2021-03-18" 5.0]}
-;   {"name": "test.pool.BOND","params": ["kda-relay-pool" "multi5" 10000.0 30 1]}
-;   {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 160000.0 232973.3]}
-;   {"name": "coin.TRANSFER","params": ["multi5" "George" 0.1]}
-;   {"name": "coin.TRANSFER","params": ["multi5" "Alice" 3.92]}
-;   {"name": "coin.TRANSFER","params": ["multi5" "Pam" 0.98]}]
-;  (map (remove 'module-hash) (env-events true)))
-; (commit-tx)
 (begin-tx)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-08")})
 (env-sigs [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR 'multi5), (test.pool.BONDER "multi5:2021-03-18")]}])
@@ -587,12 +599,12 @@
   (test.delegated-bonding.rotate "multi6"))
 (commit-tx)
 
-; stop multi1 (also cannot renew because no activity!!)
+; stop multi1 (also cannot renew because no activity!! => transfer amount must be positive)
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
 (env-sigs
   [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR "multi1"), (test.pool.BONDER "multi1:2021-03-17")]}])
 (expect "unbond multi1"
- ["Alice:8000.0" "Pam:2000.0"]
+ ["Alice:8000.0" "Bob:2000.0"]
  (test.delegated-bonding.unbond "multi1"))
 (expect "unbond events multi1"
    [{"name": "test.pool.BONDER","params": ["multi1:2021-03-17"]}
@@ -601,7 +613,7 @@
     {"name": "test.pool.UNBOND","params": ["kda-relay-pool" "multi1:2021-03-17" 10000.0]}
     {"name": "test.pool.UPDATE","params": ["kda-relay-pool" 140000.0 232973.3]}
     {"name": "coin.TRANSFER","params": ["multi1" "Alice" 8000.0]}
-    {"name": "coin.TRANSFER","params": ["multi1" "Pam" 2000.0]}]
+    {"name": "coin.TRANSFER","params": ["multi1" "Bob" 2000.0]}]
   (map (remove 'module-hash) (env-events true)))
 
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-08")})

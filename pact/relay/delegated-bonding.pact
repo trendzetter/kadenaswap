@@ -21,7 +21,10 @@
 
   (defcap TRANCHE_GUARD
     ( tranche-id:string )
-    (enforce-guard (at 'guard (read tranches tranche-id ['guard])))
+    (let ((tranche (read tranches tranche-id ['guard 'status])))
+      (enforce-guard (at 'guard tranche))
+      (enforce (= 'NEW (at 'status tranche)) "tranche is cancelled")
+    )
   )
 
   (defcap OPERATOR
