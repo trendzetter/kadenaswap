@@ -32,8 +32,6 @@
     (enforce-guard (at 'operator (read slots slot ['operator])))
   )
 
-  (defconst POOL 'kda-relay-pool)
-
   (use util.guards)
 
   (defschema tranche
@@ -131,7 +129,7 @@
     )
     @doc " Prepare a new tranche and transfer the funds to the shared account "
     @model [ (property (valid-account-id account))]
-  (with-capability (RESERVE account size) 1
+  (with-capability (RESERVE account size)
   (let ((total (get-slot-total-size slot)))
     (with-read slots slot
       {'size := maximum,
