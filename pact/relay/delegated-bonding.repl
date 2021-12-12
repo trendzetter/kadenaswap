@@ -506,14 +506,6 @@
 (coin.get-balance 'Pam)
 (coin.get-balance 'Alice)
 
-; during renewal the control was rotated to the contract
-; rotate the bond back to the operator
-(begin-tx)
-(env-sigs [{'key: "george", 'caps: [(test.delegated-bonding.OPERATOR 'multi2)]}])
-(expect "rotate multi2"
-   "operator:KeySet {keys: [george],pred: keys-all}"
-  (test.delegated-bonding.rotate "multi2"))
-(commit-tx)
 
 ; RENEW multi3
 (begin-tx)
@@ -625,6 +617,13 @@
 (commit-tx)
 
 ; stop multi1 (also cannot renew because no activity!! => transfer amount must be positive)
+
+; Try unbond directly on the pool
+(env-sigs [{'key: "george", 'caps [(test.pool.BONDER "multi1:2021-03-17")]}])
+(expect-failure  'delegated-bonding-admin
+  (test.pool.unbond "multi1:2021-03-17") )
+
+
 (env-chain-data { 'block-time: (parse-time "%F" "2021-05-07")})
 (env-sigs
   [ {'key: "george",'caps: [(test.delegated-bonding.OPERATOR "multi1"), (test.pool.BONDER "multi1:2021-03-17")]}])
