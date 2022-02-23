@@ -3,7 +3,16 @@
 (module delegated-bonding GOVERNANCE
   @doc " slots for shared bonds"
   @model
-  [ (defproperty valid-account-id (account-id:string)
+  [
+  ;; prop-supply-write-issuer-guard
+  (property
+   (forall (token:string)
+    (when (row-written tranches slots)
+     (row-enforced issuers 'guard ISSUER_KEY)))
+   { 'except:
+     [ ] } )
+
+  (defproperty valid-account-id (account-id:string)
       (and
         (>= (length account-id) 3)
         (<= (length account-id) 256))) ]
@@ -218,7 +227,7 @@
   (defun rotate-tranche
     (tranche-id:string
      new-guard:guard )
-    (with-capability (TRANCHE_GUARD tranche-id)
+    (require-capability (TRANCHE_GUARD tranche-id)
       (update tranches tranche-id {'guard: new-guard}))
     )
 
@@ -226,7 +235,7 @@
     (tranche-id:string
      account:string )
      @model [ (property (valid-account-id account))]
-     (with-capability (TRANCHE_GUARD tranche-id)
+     (require-capability (TRANCHE_GUARD tranche-id)
        (update tranches tranche-id {'account: account})))
 
 ; idea: vote to unbond. If 60% of the tranches want to unbond the operator cannot renew

@@ -187,15 +187,18 @@
 (test.delegated-bonding.rotate-tranche "multi3:Pam" (read-keyset 'Bob)))
 (commit-tx)
 
+
 (begin-tx)
-(env-sigs [{'key: "pam", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi3:Pam")] }])
-(expect "Using pams guard a new hguard can be set for multi3:Pam"
+(use test.delegated-bonding)
+(get-all-tranches)
+(env-sigs [{'key: "pam", 'caps: [(TRANCHE_GUARD "multi3:Pam")] }])
+(expect "Using pams guard a new guard can be set for multi3:Pam"
   "Write succeeded"
 (test.delegated-bonding.rotate-tranche "multi3:Pam" (read-keyset 'Bob)))
 (commit-tx)
 
 (begin-tx)
-(env-sigs [{'key: "bob", 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi3:Pam")] }])
+(env-sigs [{'keySet: {keys: [pam],pred: keys-all}, 'caps: [(test.delegated-bonding.TRANCHE_GUARD "multi3:Pam")] }])
 (expect "new acount for multi3:Pam"
   "Write succeeded"
 (test.delegated-bonding.update-tranche-account "multi3:Pam" "Bob"))
